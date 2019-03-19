@@ -5,7 +5,7 @@ Welcome to the MMITSS Common open source project contributing guide. Please read
 
 ## Open source license
 
-By contributing to the Multi-Modal Intelligent Traffic Signal Systems (MMITSS) open source project, you agree that your contributions will be licensed under its Apache License 2.0 license.
+By contributing to the Multi-Modal Intelligent Traffic Signal Systems (MMITSS) open source project, you agree that your contributions will be licensed under its Apache License 2.0 license and the ECL-2.0 open source license.
 
 ## Style Guide
 

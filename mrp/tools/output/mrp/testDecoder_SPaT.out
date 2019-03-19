@@ -1,0 +1,76 @@
+Payload size 134
+001380820018800001F58300001D4C1C3510B001043C00190032004B001023600258032003E800C10F001F4025802BC0080878015E019001C2005043C00E100FA011300302360089809600A2801C10F00514057805DC010087802EE0320035200A048C01A901C201DB006021E00ED80FA0106803812300834089808FC0200878047E04B004E2
+
+SPaT UPER (Unaligned Packed Encoding Rules) decoding result:
+
+intersections: 1
+	IntersectionState
+		id
+			regionalId: 0
+			intersectionId: 1003
+	msgCnt: 3
+	minuteOfYear: 120001
+	msOfMinute: 50001
+	status: 0000000000000000
+	phaseState
+		phase: 1
+		currState: 3
+		startTime: 50
+		minEndTime: 100
+		maxEndTime: 150
+		phase: 2
+		currState: 6
+		startTime: 150
+		minEndTime: 200
+		maxEndTime: 250
+		phase: 3
+		currState: 3
+		startTime: 250
+		minEndTime: 300
+		maxEndTime: 350
+		phase: 4
+		currState: 3
+		startTime: 350
+		minEndTime: 400
+		maxEndTime: 450
+		phase: 5
+		currState: 3
+		startTime: 450
+		minEndTime: 500
+		maxEndTime: 550
+		phase: 6
+		currState: 6
+		startTime: 550
+		minEndTime: 600
+		maxEndTime: 650
+		phase: 7
+		currState: 3
+		startTime: 650
+		minEndTime: 700
+		maxEndTime: 750
+		phase: 8
+		currState: 3
+		startTime: 750
+		minEndTime: 800
+		maxEndTime: 850
+	pedPhaseState
+		phase: 2
+		currState: 8
+		startTime: 850
+		minEndTime: 900
+		maxEndTime: 950
+		phase: 4
+		currState: 3
+		startTime: 950
+		minEndTime: 1000
+		maxEndTime: 1050
+		phase: 6
+		currState: 8
+		startTime: 1050
+		minEndTime: 1100
+		maxEndTime: 1150
+		phase: 8
+		currState: 3
+		startTime: 1150
+		minEndTime: 1200
+		maxEndTime: 1250

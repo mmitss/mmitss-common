@@ -1,0 +1,35 @@
+Payload size 48
+001D2D70EA60E1A882039400000FAC1480803C3A9849C420FA0C00000012C84819A97E66EDC44F8D89820FC4B0387980
+
+SRM UPER (Unaligned Packed Encoding Rules) decoding result:
+
+minuteOfYear: 120001
+msOfMinute: 50001
+sequenceNumber: 2
+SignalRequestList: 1
+	request
+		id
+			regionalId: 0
+			intersectionId: 1003
+		requestID: 5
+		requestType: 1
+		inBoundLane(lane): 8
+		outBoundLane(lane): 30
+		ETAminute: 120002
+		ETAsec: 20001
+		duration: 2000
+	requestor
+		VehicleID: 601
+		RequestorType
+			BasicVehicleRole: 16
+			VehicleType: 6
+		position
+			Position3D: 
+				lat: 37.4230638
+				long: -122.1420467
+				elevation: 12.6
+			heading: 60.0
+			TransmissionAndSpeed
+				transmission: 7
+				speed: 35.0
+
