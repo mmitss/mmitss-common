@@ -12,7 +12,7 @@ The library API functions can be used on a Linux-like processor such as *MMITSS 
 
 # Intersection Geographic Description File (*.nmap*)
 The over-the-air MAP message is encoded based on an *.nmap* file that stores the geographic description of an intersection. The SAE J2735 Message Library in directory `mrp/asn1j2735` is utilized to encode the MAP payload.
-- The specification of the *.nmap* text file is described in [nmap file format](Format_of_nmap.pdf).
+- The specification of the *.nmap* text file is described in [nmap file format](../docs/Format_of_nmap.pdf).
 - Sample *.nmap* and *.payload* files are contained in the `mrp/tools/nmap` subdirectory:
 	- [namp of Page Mill Rd at El Camino Real, Palo Alto, CA](../tools/nmap/ecr-page-mill.nmap).
 	- [Encoded MAP payload Page Mill Rd at El Camino Real, Palo Alto, CA](../tools/nmap/ecr-page-mill.map.payload).
