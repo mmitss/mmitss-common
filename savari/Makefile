@@ -11,6 +11,7 @@ asn:
 
 libs:
 	(cd $(J2735_DIR); make -f MakeV2X clean; make -f MakeV2X all)
+	(cd $(MAPENGINE_DIR); make -f MakeV2X clean; make -f MakeV2X all)
 
 tools:
 	(cd $(TOOLS_DIR); make -f MakeV2X clean; make -f MakeV2X all)

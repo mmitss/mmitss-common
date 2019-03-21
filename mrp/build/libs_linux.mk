@@ -8,6 +8,7 @@
 MRP_DIR       := /home/mmitss-common/mrp
 ASN1_DIR      := $(MRP_DIR)/asn1
 J2735_DIR     := $(MRP_DIR)/asn1j2735
+MAPENGINE_DIR := $(MRP_DIR)/mapEngine
 TOOLS_DIR     := $(MRP_DIR)/tools
 MRP_SO_DIR    := $(MRP_DIR)/lib
 MRP_EXEC_DIR  := $(MRP_DIR)/bin

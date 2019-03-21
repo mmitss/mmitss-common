@@ -11,6 +11,7 @@ asn:
 
 libs:
 	(cd $(J2735_DIR); make clean; make all)
+	(cd $(MAPENGINE_DIR); make clean; make all)
 
 tools:
 	(cd $(TOOLS_DIR); make clean; make all)

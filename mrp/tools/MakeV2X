@@ -3,9 +3,9 @@
 include $(SAVARI_COMMON_MK_DEFS)
 
 OBJS   := $(patsubst $(SOURCE_DIR)/%.cpp,$(V2X_OBJ_DIR)/%.o,$(wildcard $(SOURCE_DIR)/*.cpp))
-TARGET := $(V2X_OBJ_DIR)/testDecoder
-ADDINC := -I$(J2735_DIR)/$(HEADER_DIR)
-LINKSO := -Wl,-rpath,$(SAVARI_SO_DIR) -L$(SAVARI_SO_DIR) -ldsrc -lasn
+TARGET := $(V2X_OBJ_DIR)/testDecoder $(V2X_OBJ_DIR)/testMapData
+ADDINC := -I$(J2735_DIR)/$(HEADER_DIR) -I$(MAPENGINE_DIR)/$(HEADER_DIR)
+LINKSO := -Wl,-rpath,$(SAVARI_SO_DIR) -L$(SAVARI_SO_DIR) -llocAware -ldsrc -lasn
 SAVARILIBS := -L$(TOOLCHAIN_DIR)/lib -L$(V2X_SDK_DIR)/lib
 
 all: $(V2X_OBJ_DIR) $(OBJS) $(TARGET)
@@ -18,6 +18,9 @@ $(V2X_OBJ_DIR)/%.o: $(SOURCE_DIR)/%.cpp
 
 $(V2X_OBJ_DIR)/testDecoder: $(V2X_OBJ_DIR)/testDecoder.o
 	$(V2X_C++) $(V2X_C++FLAGS) -o $(V2X_OBJ_DIR)/testDecoder $(V2X_OBJ_DIR)/testDecoder.o $(LINKSO)
+
+$(V2X_OBJ_DIR)/testMapData: $(V2X_OBJ_DIR)/testMapData.o
+	$(V2X_C++) $(V2X_C++FLAGS) -o $(V2X_OBJ_DIR)/testMapData $(V2X_OBJ_DIR)/testMapData.o $(LINKSO)
 
 install:
 	(mkdir -p $(SAVARI_BIN_DIR))

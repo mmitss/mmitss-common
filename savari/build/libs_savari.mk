@@ -9,6 +9,7 @@ BASE_DIR      := /home/mmitss-common
 MRP_DIR       := $(BASE_DIR)/mrp
 ASN1_DIR      := $(MRP_DIR)/asn1
 J2735_DIR	    := $(MRP_DIR)/asn1j2735
+MAPENGINE_DIR := $(MRP_DIR)/mapEngine
 TOOLS_DIR     := $(MRP_DIR)/tools
 SAVARI_DIR    := $(BASE_DIR)/savari
 SAVARI_SO_DIR := $(SAVARI_DIR)/lib

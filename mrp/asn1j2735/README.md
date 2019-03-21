@@ -11,6 +11,8 @@ The standard of SAE J2735 message sets is [version SAE J2735_201603](http://www.
 
 The library API functions can be used on a Linux-like processor such as *MMITSS Roadside Processor (MRP)*, as well as on a *roadside unit (RSU)* and/or an *on-board unit (OBU)*. To use the API functions on a *RSU* or an *OBU*, this directory and the directory of `mrp/asn1` need to be built with RSU/OBU vendor's SDK toolchain.
 
+The encoded message frame can be validated using [USDOT Connected Vehicle Message Validator](https://webapp2.connectedvcs.com/validator/).
+
 # Operating System
 The SAE J2735 Message Library functions have been tested in
 - A PC with Ubuntu 18.04; and
