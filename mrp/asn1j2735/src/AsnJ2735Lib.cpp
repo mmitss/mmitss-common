@@ -153,13 +153,26 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 		*(pIntersectionGeometry->refPoint.elevation) = mapDataIn.geoRef.elevation;
 	}
 	// LaneWidth
-	const auto& refLaneWidth = mapDataIn.mpApproaches[0].mpLanes[0].width;
+	uint16_t refLaneWidth = mapDataIn.mpApproaches[0].mpLanes[0].width;
 	if ((pIntersectionGeometry->laneWidth = (LaneWidth_t *)calloc(1, sizeof(LaneWidth_t))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".LaneWidth" << std::endl;
 		return(false);
 	}
 	*(pIntersectionGeometry->laneWidth) = refLaneWidth;
+	// SpeedLimitList
+	uint16_t refSpeedLimt = mapDataIn.mpApproaches[0].speed_limit;
+	if (((pIntersectionGeometry->speedLimits = static_cast<SpeedLimitList_t *>(std::calloc(1, sizeof(SpeedLimitList_t)))) == NULL)
+		|| ((pIntersectionGeometry->speedLimits->list.array = static_cast<RegulatorySpeedLimit_t **>(std::calloc(1, sizeof(RegulatorySpeedLimit_t *)))) == NULL)
+		|| ((pIntersectionGeometry->speedLimits->list.array[0] = static_cast<RegulatorySpeedLimit_t *>(std::calloc(1, sizeof(RegulatorySpeedLimit_t)))) == NULL))
+	{
+		std::cerr << prog_name << "failed allocate " << allocate_level << ".SpeedLimitList" << std::endl;
+		return(false);
+	}
+	pIntersectionGeometry->speedLimits->list.size = 1;
+	pIntersectionGeometry->speedLimits->list.count = 1;
+	pIntersectionGeometry->speedLimits->list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
+	pIntersectionGeometry->speedLimits->list.array[0]->speed = refSpeedLimt;
 	// LaneList
 	std::string branch_level{".LaneList"};
 	size_t num_lanes = 0;
@@ -462,56 +475,63 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 					pNode->delta.choice.node_LatLon.lon = it->longitude;
 				}
 				// NodeXY::NodeAttributeSetXY
-				if ((it == laneStruct.mpNodes.cbegin()) && ((laneStruct.width != refLaneWidth) ||
-					((approachStruct.speed_limit > 0) && (approachStruct.speed_limit < MsgEnum::unknown_speed))))
+				if (it == laneStruct.mpNodes.cbegin())
 				{
-					if ((pNode->attributes = (NodeAttributeSetXY_t *)calloc(1, sizeof(NodeAttributeSetXY_t))) == NULL)
+					bool laneWidthAdjust  = (laneStruct.width != refLaneWidth);
+					bool speedLimitAdjust = ((approachStruct.type != MsgEnum::approachType::crosswalk) && (approachStruct.speed_limit > 0)
+						&& (approachStruct.speed_limit < MsgEnum::unknown_speed) && (approachStruct.speed_limit != refSpeedLimt));
+					if (laneWidthAdjust || speedLimitAdjust)
 					{
-						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-						std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY" << std::endl;
-						has_error = true;
-						break;
-					}
-					// lane width adjustment w.r.t. refLaneWidth
-					if (laneStruct.width != refLaneWidth)
-					{
-						if ((pNode->attributes->dWidth = (Offset_B10_t *)calloc(1, sizeof(Offset_B10_t))) == NULL)
+						if ((pNode->attributes = (NodeAttributeSetXY_t *)calloc(1, sizeof(NodeAttributeSetXY_t))) == NULL)
 						{
 							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.dWidth" << std::endl;
+							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY" << std::endl;
 							has_error = true;
 							break;
 						}
-						*(pNode->attributes->dWidth) = laneStruct.width - refLaneWidth;
-					}
-					// speed limit
-					if (approachStruct.speed_limit > 0)
-					{
-						if (((pNode->attributes->data = (LaneDataAttributeList_t *)calloc(1, sizeof(LaneDataAttributeList_t))) == NULL)
-							|| ((pNode->attributes->data->list.array = (LaneDataAttribute_t **)calloc(1, sizeof(LaneDataAttribute_t *))) == NULL)
-							|| ((pNode->attributes->data->list.array[0] = (LaneDataAttribute_t *)calloc(1, sizeof(LaneDataAttribute_t))) == NULL))
+						// lane width adjustment w.r.t. refLaneWidth
+						if (laneWidthAdjust)
 						{
-							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute" << std::endl;
-							has_error = true;
-							break;
+							if ((pNode->attributes->dWidth = (Offset_B10_t *)calloc(1, sizeof(Offset_B10_t))) == NULL)
+							{
+								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.dWidth" << std::endl;
+								has_error = true;
+								break;
+							}
+							*(pNode->attributes->dWidth) = laneStruct.width - refLaneWidth;
+							refLaneWidth = laneStruct.width;
 						}
-						pNode->attributes->data->list.size = 1;
-						pNode->attributes->data->list.count = 1;
-						LaneDataAttribute_t* pdata = pNode->attributes->data->list.array[0];
-						pdata->present = LaneDataAttribute_PR_speedLimits;
-						if (((pdata->choice.speedLimits.list.array = (RegulatorySpeedLimit_t **)calloc(1, sizeof(RegulatorySpeedLimit_t *))) == NULL)
-							|| ((pdata->choice.speedLimits.list.array[0] = (RegulatorySpeedLimit_t *)calloc(1, sizeof(RegulatorySpeedLimit_t))) == NULL))
+						// speed limit
+						if (speedLimitAdjust)
 						{
-							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute.RegulatorySpeedLimit" << std::endl;
-							has_error = true;
-							break;
+							if (((pNode->attributes->data = (LaneDataAttributeList_t *)calloc(1, sizeof(LaneDataAttributeList_t))) == NULL)
+								|| ((pNode->attributes->data->list.array = (LaneDataAttribute_t **)calloc(1, sizeof(LaneDataAttribute_t *))) == NULL)
+								|| ((pNode->attributes->data->list.array[0] = (LaneDataAttribute_t *)calloc(1, sizeof(LaneDataAttribute_t))) == NULL))
+							{
+								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute" << std::endl;
+								has_error = true;
+								break;
+							}
+							pNode->attributes->data->list.size = 1;
+							pNode->attributes->data->list.count = 1;
+							LaneDataAttribute_t* pdata = pNode->attributes->data->list.array[0];
+							pdata->present = LaneDataAttribute_PR_speedLimits;
+							if (((pdata->choice.speedLimits.list.array = (RegulatorySpeedLimit_t **)calloc(1, sizeof(RegulatorySpeedLimit_t *))) == NULL)
+								|| ((pdata->choice.speedLimits.list.array[0] = (RegulatorySpeedLimit_t *)calloc(1, sizeof(RegulatorySpeedLimit_t))) == NULL))
+							{
+								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute.RegulatorySpeedLimit" << std::endl;
+								has_error = true;
+								break;
+							}
+							pdata->choice.speedLimits.list.size = 1;
+							pdata->choice.speedLimits.list.count = 1;
+							pdata->choice.speedLimits.list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
+							pdata->choice.speedLimits.list.array[0]->speed = approachStruct.speed_limit;
+							refSpeedLimt = approachStruct.speed_limit;
 						}
-						pdata->choice.speedLimits.list.size = 1;
-						pdata->choice.speedLimits.list.count = 1;
-						pdata->choice.speedLimits.list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
-						pdata->choice.speedLimits.list.array[0]->speed = approachStruct.speed_limit;
 					}
 				}
 			}
@@ -1771,6 +1791,7 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 	}
 	else
 		mapDataOut.geoRef.elevation = 0;
+	// LaneWidth
 	if (pIntersectionGeometry->laneWidth == NULL)
 	{
 		std::cerr << prog_name << "missing LaneWidth" << std::endl;
@@ -1778,6 +1799,13 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 		return(false);
 	}
 	uint16_t refLaneWidth = static_cast<uint16_t>(*(pIntersectionGeometry->laneWidth));
+	// SpeedLimitList
+	uint16_t refSpeedLimt = ((pIntersectionGeometry->speedLimits != NULL)
+		&& (pIntersectionGeometry->speedLimits->list.array != NULL)
+		&& (pIntersectionGeometry->speedLimits->list.array[0] != NULL)
+		&& (pIntersectionGeometry->speedLimits->list.array[0]->type == SpeedLimitType_vehicleMaxSpeed)) ?
+		static_cast<uint16_t>(pIntersectionGeometry->speedLimits->list.array[0]->speed) : MsgEnum::unknown_speed;
+	// LaneList
 	if (pIntersectionGeometry->laneSet.list.count == 0)
 	{
 		std::cerr << prog_name << "missing LaneList" << std::endl;
@@ -1867,7 +1895,6 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 				allowedManeuvers = bitString2ul(pGenericLane->maneuvers->buf, pGenericLane->maneuvers->size, pGenericLane->maneuvers->bits_unused);
 		}
 		laneStruct.attributes = std::bitset<20>(allowedManeuvers << 8 | laneTypeAttrib);
-		laneStruct.width = refLaneWidth;
 		laneStruct.controlPhase = ((pGenericLane->connectsTo == NULL) || (pGenericLane->connectsTo->list.count == 0)
 			|| (pGenericLane->connectsTo->list.array[0]->signalGroup == NULL)) ? 0
 			: static_cast<uint8_t>(*(pGenericLane->connectsTo->list.array[0]->signalGroup));
@@ -1961,7 +1988,7 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 			if ((k == 0) && (pNode->attributes != NULL))
 			{
 				if (pNode->attributes->dWidth != NULL)
-					laneStruct.width = static_cast<uint16_t>(laneStruct.width + *(pNode->attributes->dWidth));
+					refLaneWidth = static_cast<uint16_t>(refLaneWidth + *(pNode->attributes->dWidth));
 				if ((directionalUse != 0x03) && (pNode->attributes->data != NULL) && (pNode->attributes->data->list.array != NULL)
 					&& (pNode->attributes->data->list.array[0] != NULL)
 					&& (pNode->attributes->data->list.array[0]->present == LaneDataAttribute_PR_speedLimits)
@@ -1969,11 +1996,14 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 					&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0] != NULL)
 					&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->type == SpeedLimitType_vehicleMaxSpeed))
 				{
-					appStruct.speed_limit = static_cast<uint16_t>(pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->speed);
+					refSpeedLimt = static_cast<uint16_t>(pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->speed);
 				}
 			}
 			nodeCnt++;
 		}
+		laneStruct.width = refLaneWidth;
+		if ((directionalUse != 0x03) && (appStruct.speed_limit != refSpeedLimt))
+			appStruct.speed_limit = refSpeedLimt;
 		if (std::find(mapDataOut.speeds.begin(), mapDataOut.speeds.end(),	appStruct.speed_limit) == mapDataOut.speeds.end())
 			mapDataOut.speeds.push_back(appStruct.speed_limit);
 		if (nodeCnt != pGenericLane->nodeList.choice.nodes.list.count)
