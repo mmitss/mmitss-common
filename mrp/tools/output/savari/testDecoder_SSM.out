@@ -1,0 +1,26 @@
+Payload size 34
+001E1F61D4C1C35108000C00000FAC0F9000000964141200200F0EA61271083E8200
+
+SSM UPER (Unaligned Packed Encoding Rules) decoding result:
+
+minuteOfYear: 120001
+msOfMinute: 50001
+sequenceNumber: 4
+SignalStatusList: 1
+	updateCnt: 1
+	id
+		regionalId: 0
+		intersectionId: 1003
+	SignalRequest: 1
+		request #: 1
+			requester
+				VehicleID: 601
+				RequestID: 5
+				sequenceNumber: 2
+				role: 16
+			inBoundLane(lane): 8
+			outBoundLane(lane): 30
+			ETAminute: 120002
+			ETAsec: 20001
+			duration: 2000
+			PRS status: 4

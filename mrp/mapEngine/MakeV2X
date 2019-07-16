@@ -1,0 +1,31 @@
+# Makefile for 'mapEngine' directory
+
+include $(SAVARI_COMMON_MK_DEFS)
+
+LIBNAME := liblocAware.so
+VERSION := 0
+SONAME  := $(LIBNAME).1
+SOFLAGS := -shared -fPIC -Wl,-soname,$(SONAME)
+TARGET  := $(V2X_LIB_DIR)/$(SONAME).$(VERSION)
+ADDINC  := -I$(J2735_DIR)/$(HEADER_DIR)
+OBJS    := $(patsubst $(SOURCE_DIR)/%.cpp,$(V2X_OBJ_DIR)/%.o,$(wildcard $(SOURCE_DIR)/*.cpp))
+
+all: $(V2X_OBJ_DIR) $(V2X_LIB_DIR) $(OBJS) $(TARGET)
+
+$(V2X_OBJ_DIR):
+	mkdir -p $(V2X_OBJ_DIR)
+
+$(V2X_LIB_DIR):
+	mkdir -p $(V2X_LIB_DIR)
+
+$(V2X_OBJ_DIR)/%.o: $(SOURCE_DIR)/%.cpp
+	$(V2X_C++) $(V2X_C++FLAGS) $(ADDINC) -c -o $@ $<
+
+$(TARGET): $(OBJS)
+	($(V2X_C++) $(SOFLAGS) -o $(TARGET) $(OBJS))
+	(mkdir -p $(SAVARI_SO_DIR); cp $(TARGET) $(SAVARI_SO_DIR))
+	(cd $(SAVARI_SO_DIR); rm -f $(SONAME); ln -s $(SONAME).$(VERSION) $(SONAME))
+	(cd $(SAVARI_SO_DIR); rm -f $(LIBNAME); ln -s $(SONAME).$(VERSION) $(LIBNAME))
+
+clean:
+	rm -f $(OBJS) $(TARGET)

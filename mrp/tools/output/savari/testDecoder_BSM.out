@@ -1,0 +1,36 @@
+Payload size 40
+001425004000009670D465F99BB7113E3626083F7FFFFFFFF0F312C0FDFA1FA1007FFF8000962580
+
+BSM UPER (Unaligned Packed Encoding Rules) decoding result:
+
+BSMcoreData
+	msgCnt: 1
+	id: 601
+	secMark: 50001
+	lat: 37.4230638
+	long: -122.1420467
+	elev: 12.6
+	PositionalAccuracy
+		semiMajor: 255
+		semiMinor: 255
+		orientation: 65535
+	transmission : 7
+	speed : 35.0
+	heading : 60.0
+	SteeringWheelAngle: 127
+	AccelerationSet4Way
+		accLong: 2001
+		accLat: 2001
+		accVert: -127
+		yaw: 0
+	BrakeSystemStatus
+		wheelBrakes: 00001
+		traction: 0
+		abs: 0
+		scs: 0
+		brakeBoost: 0
+		auxBrakes: 0
+	VehicleSize
+		width: 300
+		length: 1200
+

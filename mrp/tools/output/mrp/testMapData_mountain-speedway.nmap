@@ -1,0 +1,311 @@
+MAP_Name mountain-speedway
+MAP_Version 8
+RegionalID 0
+IntersectionID 26380
+WithElevation yes
+Reference_point 32.2359644  -110.9524114  716.0
+ApproachID 1
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 4
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			32.2361893  -110.9525349
+			32.2362997  -110.9525405
+			32.2364344  -110.9525454
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.8.3 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 4
+		Lane_width 366
+		Lane_Nodes
+			32.2361899  -110.9524686
+			32.2363051  -110.9524791
+			32.2364363  -110.9524888
+			32.2365196  -110.9524910
+			32.2366519  -110.9524896
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.6.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 7
+		Lane_width 366
+		Lane_Nodes
+			32.2361887  -110.9524324
+			32.2363093  -110.9524421
+			32.2364349  -110.9524473
+			32.2365192  -110.9524569
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.4.1 leftTurn
+		End_LaneConnectsTo
+ApproachID 2
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2361891  -110.9523921
+			32.2363109  -110.9523995
+			32.2364384  -110.9524106
+			32.2365252  -110.9524165
+			32.2366533  -110.9524261
+		End_Nodes
+ApproachID 3
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			32.2360902  -110.9522690
+			32.2360920  -110.9520085
+			32.2360943  -110.9517249
+			32.2360925  -110.9515070
+			32.2360967  -110.9513156
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.8.3 straightAhead
+			0.26380.2.1 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Lane_Nodes
+			32.2360583  -110.9522620
+			32.2360601  -110.9520078
+			32.2360619  -110.9517236
+			32.2360630  -110.9515065
+			32.2360624  -110.9513137
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.8.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Lane_Nodes
+			32.2360193  -110.9522509
+			32.2360217  -110.9520051
+			32.2360223  -110.9517209
+			32.2360223  -110.9515065
+			32.2360223  -110.9513130
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.8.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 4
+		Lane_type traffic
+		Lane_phaseNo 1
+		Lane_width 366
+		Lane_Nodes
+			32.2359892  -110.9522431
+			32.2359922  -110.9520050
+			32.2359945  -110.9517186
+			32.2359957  -110.9515070
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.6.1 unavailable
+		End_LaneConnectsTo
+ApproachID 4
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2359214  -110.9522430
+			32.2359226  -110.9520043
+			32.2359243  -110.9517140
+			32.2359237  -110.9515021
+		End_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2358863  -110.9522384
+			32.2358886  -110.9520031
+			32.2358891  -110.9517134
+			32.2358919  -110.9515049
+		End_Nodes
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2358572  -110.9522308
+			32.2358623  -110.9520008
+			32.2358601  -110.9517125
+			32.2358623  -110.9515047
+		End_Nodes
+ApproachID 5
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 8
+		Lane_width 366
+		Lane_Nodes
+			32.2357567  -110.9522905
+			32.2355979  -110.9522804
+			32.2354675  -110.9522714
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.4.3 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 8
+		Lane_width 366
+		Lane_Nodes
+			32.2357567  -110.9523552
+			32.2355937  -110.9523401
+			32.2354661  -110.9523317
+			32.2352095  -110.9523200
+			32.2349869  -110.9523150
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.2.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 3
+		Lane_width 366
+		Lane_Nodes
+			32.2357624  -110.9524005
+			32.2355908  -110.9523803
+			32.2354703  -110.9523719
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.8.1 leftTurn
+		End_LaneConnectsTo
+ApproachID 6
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2357553  -110.9524390
+			32.2355894  -110.9524289
+			32.2354646  -110.9524155
+			32.2352562  -110.9523938
+		End_Nodes
+ApproachID 7
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			32.2358541  -110.9525542
+			32.2358513  -110.9527694
+			32.2358519  -110.9530725
+			32.2358530  -110.9534279
+			32.2358542  -110.9536485
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.4.3 straightAhead
+			0.26380.6.1 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Lane_Nodes
+			32.2358865  -110.9525683
+			32.2358842  -110.9527755
+			32.2358837  -110.9530778
+			32.2358865  -110.9534292
+			32.2358870  -110.9536545
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.4.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Lane_Nodes
+			32.2359155  -110.9525687
+			32.2359170  -110.9527832
+			32.2359113  -110.9530833
+			32.2359155  -110.9534303
+			32.2359198  -110.9536549
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.4.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 4
+		Lane_type traffic
+		Lane_phaseNo 5
+		Lane_width 366
+		Lane_Nodes
+			32.2359527  -110.9525808
+			32.2359482  -110.9527900
+			32.2359482  -110.9530884
+			32.2359499  -110.9534329
+			32.2359527  -110.9536555
+		End_Nodes
+		Lane_ConnectsTo
+			0.26380.2.1 leftTurn
+		End_LaneConnectsTo
+ApproachID 8
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2360237  -110.9526383
+			32.2360227  -110.9528111
+			32.2360186  -110.9531043
+			32.2360186  -110.9534294
+		End_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2360610  -110.9526435
+			32.2360624  -110.9528245
+			32.2360596  -110.9531178
+			32.2360539  -110.9534296
+		End_Nodes
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			32.2360924  -110.9526429
+			32.2360913  -110.9528232
+			32.2360868  -110.9531250
+			32.2360816  -110.9534293
+		End_Nodes
+End_MAP

@@ -1,0 +1,31 @@
+# Makefile for 'asn1' directory
+
+include $(SAVARI_COMMON_MK_DEFS)
+
+ASN_CFLAGS := -Wno-missing-field-initializers -Wno-format -std=c99
+LIBNAME    := libasn.so
+VERSION    := 0
+SONAME     := $(LIBNAME).1
+SOFLAGS    := -shared -fPIC -Wl,-soname,$(SONAME)
+TARGET     := $(V2X_LIB_DIR)/$(SONAME).$(VERSION)
+OBJS       := $(patsubst $(SOURCE_DIR)/%.c,$(V2X_OBJ_DIR)/%.o,$(wildcard $(SOURCE_DIR)/*.c))
+
+all: $(V2X_OBJ_DIR) $(V2X_LIB_DIR) $(OBJS) $(TARGET)
+
+$(V2X_OBJ_DIR):
+	mkdir -p $(V2X_OBJ_DIR)
+
+$(V2X_LIB_DIR):
+	mkdir -p $(V2X_LIB_DIR)
+
+$(V2X_OBJ_DIR)/%.o: $(SOURCE_DIR)/%.c
+	$(V2X_CC) $(V2X_CFLAGS) $(ASN_CFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJS)
+	($(V2X_CC) $(SOFLAGS) -o $(TARGET) $(OBJS))
+	(mkdir -p $(SAVARI_SO_DIR); cp $(TARGET) $(SAVARI_SO_DIR))
+	(cd $(SAVARI_SO_DIR); rm -f $(SONAME); ln -s $(SONAME).$(VERSION) $(SONAME))
+	(cd $(SAVARI_SO_DIR); rm -f $(LIBNAME); ln -s $(SONAME).$(VERSION) $(LIBNAME))
+
+clean:
+	rm -f $(OBJS) $(TARGET)
