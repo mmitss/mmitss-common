@@ -123,7 +123,7 @@ ApproachID 3
 			32.2359957  -110.9515070
 		End_Nodes
 		Lane_ConnectsTo
-			0.26380.6.1 unavailable
+			0.26380.6.1 leftTurn
 		End_LaneConnectsTo
 ApproachID 4
 	Approach_type outbound

@@ -18,7 +18,6 @@ class LocAware
 {
 	private:
 		bool initiated;
-		bool speedLimitInLane;
 		bool saveNewMap2nmap;
 		// store intersection MAP data
 		std::vector<NmapData::IntersectionStruct> mpIntersection;
@@ -60,7 +59,7 @@ class LocAware
 			const GeoUtils::motion_t& motionState, GeoUtils::vehicleTracking_t& vehicleTrackingState) const;
 
 	public:
-		LocAware(const std::string& fname, bool isSingleFrame=false);
+		LocAware(const std::string& fname);
 		~LocAware(void);
 
 		// set option for saving new MAP into namp file

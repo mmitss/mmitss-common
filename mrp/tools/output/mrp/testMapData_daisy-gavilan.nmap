@@ -1,0 +1,412 @@
+MAP_Name daisy-gavilan
+MAP_Version 8
+RegionalID 0
+IntersectionID 44383
+WithElevation yes
+Reference_point 33.8429477  -112.1351937  506.0
+ApproachID 1
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Lane_Nodes
+			33.8431347  -112.1349899
+			33.8431970  -112.1341585
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.8.2 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Lane_Nodes
+			33.8430872  -112.1349893
+			33.8433200  -112.1318916
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.6.3 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Computed_Lane 2 45 -388 0 0 0
+		Computed_Nodes
+			33.8430522  -112.1349844
+			33.8432850  -112.1318867
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.6.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 4
+		Lane_type traffic
+		Lane_phaseNo 6
+		Lane_width 366
+		Computed_Lane 2 105 -858 0 0 0
+		Computed_Nodes
+			33.8430098  -112.1349780
+			33.8432426  -112.1318802
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.6.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 5
+		Lane_type traffic
+		Lane_phaseNo 1
+		Lane_width 366
+		Lane_Nodes
+			33.8429453  -112.1349745
+			33.8430744  -112.1338534
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.4.1 leftTurn
+			0.44383.2.1 uTurn
+		End_LaneConnectsTo
+ApproachID 2
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 2 -15 448 0 0 0
+		Computed_Nodes
+			33.8429112  -112.1349620
+			33.8430070  -112.1336129
+		End_Computed_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			33.8428708  -112.1349603
+			33.8429666  -112.1336113
+		End_Nodes
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 2 30 -448 0 0 0
+		Computed_Nodes
+			33.8428304  -112.1349571
+			33.8429262  -112.1336081
+		End_Computed_Nodes
+ApproachID 3
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 8
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			33.8427260  -112.1350019
+			33.8421402  -112.1349670
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.2.3 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 8
+		Lane_width 366
+		Lane_Nodes
+			33.8427188  -112.1350657
+			33.8421341  -112.1350228
+			33.8418456  -112.1350121
+			33.8414536  -112.1350282
+			33.8411439  -112.1350845
+			33.8407897  -112.1351744
+			33.8404634  -112.1352883
+			33.8402061  -112.1354090
+			33.8398976  -112.1355834
+			33.8397399  -112.1356879
+			33.8395789  -112.1358086
+			33.8394408  -112.1359246
+			33.8393005  -112.1360467
+			33.8391289  -112.1362150
+			33.8389379  -112.1364283
+			33.8388054  -112.1365939
+			33.8386801  -112.1367615
+			33.8384300  -112.1371135
+			33.8379410  -112.1377968
+			33.8376948  -112.1381380
+			33.8374447  -112.1384880
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.8.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 8
+		Lane_width 366
+		Computed_Lane 2 -478 -24 0 0 0
+		Computed_Nodes
+			33.8427167  -112.1351173
+			33.8421319  -112.1350744
+			33.8418435  -112.1350637
+			33.8414514  -112.1350798
+			33.8411418  -112.1351361
+			33.8407876  -112.1352260
+			33.8404612  -112.1353400
+			33.8402039  -112.1354606
+			33.8398955  -112.1356350
+			33.8397377  -112.1357396
+			33.8395767  -112.1358603
+			33.8394387  -112.1359763
+			33.8392983  -112.1360984
+			33.8391268  -112.1362667
+			33.8389357  -112.1364799
+			33.8388032  -112.1366455
+			33.8386779  -112.1368132
+			33.8384278  -112.1371651
+			33.8379389  -112.1378484
+			33.8376926  -112.1381897
+			33.8374426  -112.1385397
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.8.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 4
+		Lane_type traffic
+		Lane_phaseNo 3
+		Lane_width 366
+		Lane_Nodes
+			33.8427043  -112.1351783
+			33.8422276  -112.1351475
+			33.8418578  -112.1350778
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.6.1 leftTurn
+			0.44383.4.1 uTurn
+		End_LaneConnectsTo
+ApproachID 4
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			33.8426927  -112.1352406
+			33.8420656  -112.1352084
+		End_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 1 -501 -11 0 0 0
+		Computed_Nodes
+			33.8426917  -112.1352947
+			33.8420646  -112.1352625
+		End_Computed_Nodes
+ApproachID 5
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			33.8427461  -112.1353882
+			33.8426904  -112.1364516
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.4.2 rightTurn
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Computed_Lane 3 -4 -433 0 0 0
+		Computed_Nodes
+			33.8427995  -112.1354020
+			33.8427015  -112.1366866
+			33.8426537  -112.1371814
+			33.8425489  -112.1377943
+			33.8424242  -112.1382636
+			33.8422660  -112.1387370
+			33.8420533  -112.1393190
+			33.8418472  -112.1398809
+			33.8416667  -112.1405634
+			33.8415575  -112.1411548
+			33.8415124  -112.1415383
+			33.8414822  -112.1419285
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.2.3 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Lane_Nodes
+			33.8428385  -112.1354016
+			33.8427405  -112.1366862
+			33.8426927  -112.1371810
+			33.8425880  -112.1377939
+			33.8424632  -112.1382632
+			33.8423051  -112.1387366
+			33.8420923  -112.1393186
+			33.8418862  -112.1398805
+			33.8417057  -112.1405630
+			33.8415965  -112.1411544
+			33.8415514  -112.1415379
+			33.8415213  -112.1419281
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.2.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 4
+		Lane_type traffic
+		Lane_phaseNo 2
+		Lane_width 366
+		Computed_Lane 3 -116 388 0 0 0
+		Computed_Nodes
+			33.8428735  -112.1354141
+			33.8427755  -112.1366987
+			33.8427277  -112.1371935
+			33.8426230  -112.1378064
+			33.8424982  -112.1382757
+			33.8423400  -112.1387491
+			33.8421273  -112.1393311
+			33.8419212  -112.1398930
+			33.8417407  -112.1405755
+			33.8416315  -112.1411669
+			33.8415864  -112.1415504
+			33.8415563  -112.1419407
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.2.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 5
+		Lane_type traffic
+		Lane_phaseNo 5
+		Lane_width 366
+		Lane_Nodes
+			33.8429377  -112.1354190
+			33.8428196  -112.1363671
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.8.1 leftTurn
+			0.44383.6.1 uTurn
+		End_LaneConnectsTo
+ApproachID 6
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 2 -8 -459 0 0 0
+		Computed_Nodes
+			33.8429832  -112.1354292
+			33.8428830  -112.1367179
+		End_Computed_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			33.8430246  -112.1354284
+			33.8429243  -112.1367170
+		End_Nodes
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 2 -68 362 0 0 0
+		Computed_Nodes
+			33.8430572  -112.1354357
+			33.8429570  -112.1367244
+		End_Computed_Nodes
+ApproachID 7
+	Approach_type inbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 4
+		Lane_width 366
+		Lane_Rules
+			rightTurnOnRedAllowed
+		End_LaneRules
+		Lane_Nodes
+			33.8431459  -112.1353345
+			33.8437997  -112.1353989
+			33.8441728  -112.1354967
+			33.8445393  -112.1356456
+			33.8448589  -112.1358334
+			33.8451786  -112.1360815
+			33.8460484  -112.1368337
+			33.8465318  -112.1372106
+			33.8467656  -112.1373608
+			33.8470508  -112.1375244
+			33.8481455  -112.1380916
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.6.3 rightTurn
+			0.44383.4.2 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 4
+		Lane_width 366
+		Computed_Lane 1 529 138 0 0 0
+		Computed_Nodes
+			33.8431584  -112.1352773
+			33.8438121  -112.1353417
+			33.8441853  -112.1354396
+			33.8445517  -112.1355885
+			33.8448714  -112.1357762
+			33.8451910  -112.1360243
+			33.8460609  -112.1367766
+			33.8465442  -112.1371534
+			33.8467781  -112.1373036
+			33.8470632  -112.1374672
+			33.8481580  -112.1380345
+		End_Computed_Nodes
+		Lane_ConnectsTo
+			0.44383.4.1 straightAhead
+		End_LaneConnectsTo
+	Lane_seq 3
+		Lane_type traffic
+		Lane_phaseNo 7
+		Lane_width 366
+		Lane_Nodes
+			33.8431671  -112.1352017
+			33.8436884  -112.1352688
+			33.8439011  -112.1353560
+		End_Nodes
+		Lane_ConnectsTo
+			0.44383.2.1 leftTurn
+			0.44383.8.1 uTurn
+		End_LaneConnectsTo
+ApproachID 8
+	Approach_type outbound
+	Speed_limit 35
+	Lane_seq 1
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Lane_Nodes
+			33.8431805  -112.1351468
+			33.8437017  -112.1352031
+		End_Nodes
+	Lane_seq 2
+		Lane_type traffic
+		Lane_phaseNo 0
+		Lane_width 366
+		Computed_Lane 1 499 93 0 0 0
+		Computed_Nodes
+			33.8431888  -112.1350929
+			33.8437101  -112.1351492
+		End_Computed_Nodes
+End_MAP

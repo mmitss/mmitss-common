@@ -24,13 +24,32 @@ struct conn_element_t
 
 struct node_element_t
 {
-		bool useXY;
+	bool useXY;
 	// unit of centimeters
 	int32_t offset_x;
 	int32_t offset_y;
 	// in 1/10th micro degrees
 	int32_t latitude;
 	int32_t longitude;
+};
+
+struct computed_lane_element_t
+{
+	uint8_t  refLaneId;
+	int32_t  offset_x;        // unit of centimeters
+	int32_t  offset_y;        // unit of centimeters
+	uint16_t rotateXY;        // LSB of 0.0125 degrees
+	int16_t  scale_x;
+	int16_t  scale_y;
+	void reset(void)
+	{
+		refLaneId = 0;
+		offset_x = 0;
+		offset_y = 0;
+		rotateXY = 0;
+		scale_x = 0;
+		scale_y = 0;
+	};
 };
 
 struct lane_element_t
@@ -77,6 +96,8 @@ struct lane_element_t
 		 */
 	uint16_t width;        // in centimeter
 	uint8_t  controlPhase; // 1 - 8
+	bool isComputedLane;
+	computed_lane_element_t mpComputedLane;
 	std::vector<conn_element_t> mpConnectTo;
 	std::vector<node_element_t> mpNodes;
 };
@@ -100,7 +121,6 @@ struct geo_refPoint_t
 
 struct MapData_element_t
 {
-	bool isSingleFrame;
 	uint16_t regionalId;
 	uint16_t id;
 	uint8_t  mapVersion;
@@ -113,13 +133,11 @@ struct MapData_element_t
 		 *    Reserved                              (4-7)
 		 */
 	geo_refPoint_t geoRef;
-	std::vector<uint16_t> speeds;
 	std::vector<approach_element_t> mpApproaches;
 	void reset(void)
 	{
 		regionalId = 0;
 		attributes.reset();
-		speeds.clear();
 		mpApproaches.clear();
 	};
 };

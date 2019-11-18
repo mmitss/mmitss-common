@@ -52,7 +52,7 @@ namespace GeoUtils
 
 	struct enuCoord_t
 	{
-		GeoUtils::point3D_t     pointECEF;        // ENU origin reference in ECEF
+		GeoUtils::point3D_t     pointECEF;        // ENU origin referenced in ECEF
 		GeoUtils::transMatrix_t transMatrix;
 	};
 
@@ -70,11 +70,11 @@ namespace GeoUtils
 		};
 		uint32_t length() const
 		{
-			return (static_cast<uint32_t>(round(std::sqrt(x  * x + y * y))));
+			return (static_cast<uint32_t>(round(std::sqrt((long)x * x + y * y))));
 		};
 		uint32_t distance2pt(const GeoUtils::point2D_t& p) const
 		{
-			return (static_cast<uint32_t>(round(std::sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)))));
+			return (static_cast<uint32_t>(round(std::sqrt((long)(x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)))));
 		};
 		uint16_t direction2pt(const GeoUtils::point2D_t& p) const
 		{
@@ -108,9 +108,9 @@ namespace GeoUtils
 
 	struct projection_t
 	{
-		double t;       // along the line (unit-less)
-		double d;       // distance away from the line, positive means on the right-side of travel
-		double length;  // length of the line segment
+		double t;       // along the line segment (unit-less)
+		double d;       // distance away from the line segment in centimeters, positive means on the right-side of travel
+		double length;  // length of the line segment in centimeters
 		void reset(void)
 		{
 			t = 0.0;

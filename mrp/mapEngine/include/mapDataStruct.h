@@ -39,6 +39,25 @@ namespace NmapData
 		uint16_t heading;            // in decidegree
 	};
 
+	struct ComputedLaneStruct
+	{
+		uint8_t  refLaneId;
+		int32_t  offset_x;        // unit of centimeters
+		int32_t  offset_y;        // unit of centimeters
+		uint16_t rotateXY;        // LSB of 0.0125 degrees
+		int16_t  scale_x;
+		int16_t  scale_y;
+		void reset(void)
+		{
+			refLaneId = 0;
+			offset_x = 0;
+			offset_y = 0;
+			rotateXY = 0;
+			scale_x = 0;
+			scale_y = 0;
+		};
+	};
+
 	struct LaneStruct
 	{ // An approach consists of multiple lane objectives, including traffic lanes and crosswalks.
 		// Order of lane array starts at the curb lane and moves towards the center of the road.
@@ -83,7 +102,9 @@ namespace NmapData
 			 */
 		uint16_t width;              // in centimeter
 		uint8_t  controlPhase;       // 1 - 8
+		bool     isComputedLane;
 		size_t   numpoints;          // sizeof(mpNodes)
+		NmapData::ComputedLaneStruct mpComputed;
 		std::vector<NmapData::ConnectStruct> mpConnectTo;
 		std::vector<NmapData::NodeStruct> mpNodes;
 	};

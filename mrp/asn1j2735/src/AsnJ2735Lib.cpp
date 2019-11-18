@@ -18,12 +18,8 @@
 // asn1j2735
 #include "AsnJ2735Lib.h"
 
-/// convert number of bits to number of bytes
-auto numbits2numbytes = [](const ssize_t& bit_nums)->size_t
-	{return((bit_nums <= 0) ? (0) : ((bit_nums + 7) >> 3));};
-
 /// convert unsigned long to OCTET STRING with preallocated buffer
-auto ul2octString = [](uint8_t* pbuf, int size, unsigned long value)->void
+auto ul2octString = [](uint8_t* pbuf, const int& size, const unsigned long& value)->void
 { // OCTET STRING is in network byte order
 	for (int i = 0; i < size; i++)
 	{
@@ -61,7 +57,7 @@ auto bitString2ul = [](const uint8_t* pbuf, const size_t& size, const int& bits_
 auto ul2bitString = [](uint8_t** pbuf, size_t& num_bytes, int& bits_unused, const int& num_bits, const unsigned long& value)->bool
 {
 	int bytes = (num_bits / 8) + (((num_bits % 8) > 0) ? 1 : 0);
-	if ((*pbuf = (uint8_t *)calloc(bytes, sizeof(uint8_t))) == NULL)
+	if ((*pbuf = static_cast<uint8_t *>(std::calloc(bytes, sizeof(uint8_t)))) == NULL)
 		return(false);
 	num_bytes = bytes;
 	bits_unused = bytes * 8 - num_bits;
@@ -72,15 +68,15 @@ auto ul2bitString = [](uint8_t** pbuf, size_t& num_bytes, int& bits_unused, cons
 /// convert uint32_t vehicle ID to Temporary ID
 auto id2temporaryId = [](uint8_t** pbuf, size_t& size, const unsigned long& value)->bool
 { // Temporary ID has 4 bytes
-	if ((*pbuf = (uint8_t *)calloc(4, sizeof(uint8_t))) == NULL)
+	if ((*pbuf = static_cast<uint8_t *>(std::calloc(4, sizeof(uint8_t)))) == NULL)
 		return(false);
 	size = 4;
 	ul2octString(*pbuf, 4, value);
 	return(true);
 };
 
-/// fill MapData_t structure which specifies speed limit at lane/node level
-auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t& mapData)->bool
+/// fill MapData_t structure
+auto mapData2msgFrame = [](const MapData_element_t& mapDataIn, MapData_t& mapData)->bool
 {	// MapData:
 	// -- Required objects ------------------------------------ //
 	//	msgIssueRevision
@@ -94,12 +90,12 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	//	RestrictionClassList                EXCL
 	//	RegionalExtension                   EXCL
 	// -------------------------------------------------------- //
-	std::string prog_name = "mapData2msgFrame_single: ";
+	std::string prog_name = "mapData2msgFrame: ";
 	std::string allocate_level{"MapData"};
 	// msgIssueRevision
 	mapData.msgIssueRevision	= mapDataIn.mapVersion;
 	// LayerType
-	if ((mapData.layerType = (LayerType_t *)calloc(1, sizeof(LayerType_t))) == NULL)
+	if ((mapData.layerType = static_cast<LayerType_t *>(std::calloc(1, sizeof(LayerType_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".LayerType" << std::endl;
 		return(false);
@@ -107,9 +103,9 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	*(mapData.layerType) = LayerType_intersectionData;
 	// IntersectionGeometryList - one intersection per MapData
 	allocate_level += ".IntersectionGeometryList.IntersectionGeometry";
-	if (((mapData.intersections = (IntersectionGeometryList_t *)calloc(1, sizeof(IntersectionGeometryList_t))) == NULL)
-		|| ((mapData.intersections->list.array = (IntersectionGeometry_t **)calloc(1, sizeof(IntersectionGeometry_t *))) == NULL)
-		|| ((mapData.intersections->list.array[0] = (IntersectionGeometry_t *)calloc(1, sizeof(IntersectionGeometry_t))) == NULL))
+	if (((mapData.intersections = static_cast<IntersectionGeometryList_t *>(std::calloc(1, sizeof(IntersectionGeometryList_t)))) == NULL)
+		|| ((mapData.intersections->list.array = static_cast<IntersectionGeometry_t **>(std::calloc(1, sizeof(IntersectionGeometry_t *)))) == NULL)
+		|| ((mapData.intersections->list.array[0] = static_cast<IntersectionGeometry_t *>(std::calloc(1, sizeof(IntersectionGeometry_t)))) == NULL))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
@@ -126,13 +122,13 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	// -- OPTIONAL objects ------------ including/excluding  -- //
 	//	DescriptiveName                     EXCL
 	//	LaneWidth                           INCL
-	//	SpeedLimitList                      EXCL
+	//	SpeedLimitList                      INCL
 	//	PreemptPriorityList                 EXCL
 	//	RegionalExtension                   EXCL
 	// -------------------------------------------------------- //
 	// IntersectionReferenceID
 	pIntersectionGeometry->id.id = mapDataIn.id;
-	if ((pIntersectionGeometry->id.region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL)
+	if ((pIntersectionGeometry->id.region = static_cast<RoadRegulatorID_t *>(std::calloc(1, sizeof(RoadRegulatorID_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".id.region" << std::endl;
 		return(false);
@@ -145,7 +141,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	pIntersectionGeometry->refPoint.Long = mapDataIn.geoRef.longitude;
 	if (mapDataIn.attributes.test(0))
 	{ // include elevation data
-		if ((pIntersectionGeometry->refPoint.elevation = (DSRC_Elevation_t *)calloc(1, sizeof(DSRC_Elevation_t))) == NULL)
+		if ((pIntersectionGeometry->refPoint.elevation = static_cast<DSRC_Elevation_t *>(std::calloc(1, sizeof(DSRC_Elevation_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".Position3D.Elevation" << std::endl;
 			return(false);
@@ -154,7 +150,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	}
 	// LaneWidth
 	uint16_t refLaneWidth = mapDataIn.mpApproaches[0].mpLanes[0].width;
-	if ((pIntersectionGeometry->laneWidth = (LaneWidth_t *)calloc(1, sizeof(LaneWidth_t))) == NULL)
+	if ((pIntersectionGeometry->laneWidth = static_cast<LaneWidth_t *>(std::calloc(1, sizeof(LaneWidth_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".LaneWidth" << std::endl;
 		return(false);
@@ -181,7 +177,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 		if (!it->mpLanes.empty())
 			num_lanes += it->mpLanes.size();
 	}
-	if ((pIntersectionGeometry->laneSet.list.array = (GenericLane_t **)calloc(num_lanes, sizeof(GenericLane_t *))) == NULL)
+	if ((pIntersectionGeometry->laneSet.list.array = static_cast<GenericLane_t **>(std::calloc(num_lanes, sizeof(GenericLane_t *)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
 		return(false);
@@ -192,16 +188,29 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 	// loop through approaches / lanes
 	bool has_error = false;  // for earlier return
 	for (const auto& approachStruct : mapDataIn.mpApproaches)
-	{
-		for (const auto& laneStruct : approachStruct.mpLanes)
+	{ // for each approach, include computed lanes after the referene lane
+		std::vector<size_t> laneIndices;
+		std::vector<size_t> computedLaneIndices;
+		for (size_t laneSeq = 0; laneSeq < approachStruct.mpLanes.size(); laneSeq++)
 		{
-			if ((pIntersectionGeometry->laneSet.list.array[laneListCnt] = (GenericLane_t *)calloc(1, sizeof(GenericLane_t))) == NULL)
+			if (approachStruct.mpLanes[laneSeq].isComputedLane)
+				computedLaneIndices.push_back(laneSeq);
+			else
+				laneIndices.push_back(laneSeq);
+		}
+		if (!computedLaneIndices.empty())
+			laneIndices.insert(laneIndices.end(), computedLaneIndices.begin(), computedLaneIndices.end());
+		for (size_t laneSeq = 0; laneSeq < laneIndices.size(); laneSeq++)
+		{
+			const auto& laneStruct = approachStruct.mpLanes[laneIndices[laneSeq]];
+			GenericLane_t* pGenericLane = static_cast<GenericLane_t *>(std::calloc(1, sizeof(GenericLane_t)));
+			if (pGenericLane == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
 				has_error = true;
 				break;
 			}
-			GenericLane_t* pGenericLane = pIntersectionGeometry->laneSet.list.array[laneListCnt++];
+			pIntersectionGeometry->laneSet.list.array[laneListCnt++] = pGenericLane;
 			// GenericLane:
 			// -- Required objects ------------------------------------ //
 			//	LaneID
@@ -232,7 +241,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 				break;
 			}
 			auto& laneDirection = pGenericLane->laneAttributes.directionalUse;
-			if (!ul2bitString(&laneDirection.buf, laneDirection.size, laneDirection.bits_unused, 2, direction_attributes.to_ulong()))
+			if (!ul2bitString(&(laneDirection.buf), laneDirection.size, laneDirection.bits_unused, 2, direction_attributes.to_ulong()))
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".LaneAttributes.LaneDirection" << std::endl;
 				has_error = true;
@@ -240,7 +249,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			}
 			// LaneAttributes::LaneSharing - 10 bits BIT STRING - 'not shared' and 'not overlapping'
 			auto& laneSharing = pGenericLane->laneAttributes.sharedWith;
-			if (!ul2bitString(&laneSharing.buf, laneSharing.size, laneSharing.bits_unused, 10, 0))
+			if (!ul2bitString(&(laneSharing.buf), laneSharing.size, laneSharing.bits_unused, 10, 0))
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".LaneAttributes.LaneSharing" << std::endl;
 				has_error = true;
@@ -252,7 +261,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			{ // Crosswalk - 16 bits BIT STRING
 				laneTypeAttributes.present = LaneTypeAttributes_PR_crosswalk;
 				auto& crosswalk = laneTypeAttributes.choice.crosswalk;
-				if (!ul2bitString(&crosswalk.buf, crosswalk.size, crosswalk.bits_unused, 16, laneStruct.attributes.to_ulong()))
+				if (!ul2bitString(&(crosswalk.buf), crosswalk.size, crosswalk.bits_unused, 16, laneStruct.attributes.to_ulong()))
 				{
 					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".LaneAttributes.LaneTypeAttributes.Crosswalk" << std::endl;
 					has_error = true;
@@ -263,7 +272,7 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			{ // Vehicle - 8 bits BIT STRING
 				laneTypeAttributes.present = LaneTypeAttributes_PR_vehicle;
 				auto& vehicle = laneTypeAttributes.choice.vehicle;
-				if (!ul2bitString(&vehicle.buf, vehicle.size, vehicle.bits_unused, 8, (laneStruct.attributes.to_ulong() & 0xFF)))
+				if (!ul2bitString(&(vehicle.buf), vehicle.size, vehicle.bits_unused, 8, (laneStruct.attributes.to_ulong() & 0xFF)))
 				{
 					std::cerr << prog_name << "allocate " << allocate_level << branch_level << ".LaneAttributes.LaneTypeAttributes.Vehicle" << std::endl;
 					has_error = true;
@@ -274,14 +283,14 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			switch(approachStruct.type)
 			{
 			case MsgEnum::approachType::outbound:
-				if ((pGenericLane->egressApproach = (ApproachID_t *)calloc(1, sizeof(ApproachID_t))) == NULL)
+				if ((pGenericLane->egressApproach = static_cast<ApproachID_t *>(std::calloc(1, sizeof(ApproachID_t)))) == NULL)
 					has_error = true;
 				else
 					*(pGenericLane->egressApproach) = approachStruct.id;
 				break;
 			case MsgEnum::approachType::inbound:
 			case MsgEnum::approachType::crosswalk:
-				if ((pGenericLane->ingressApproach = (ApproachID_t *)calloc(1, sizeof(ApproachID_t))) == NULL)
+				if ((pGenericLane->ingressApproach = static_cast<ApproachID_t *>(std::calloc(1, sizeof(ApproachID_t)))) == NULL)
 					has_error = true;
 				else
 					*(pGenericLane->ingressApproach) = approachStruct.id;
@@ -296,8 +305,8 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			// AllowedManeuvers - 12 bits BIT STRING
 			if (approachStruct.type != MsgEnum::approachType::crosswalk)
 			{
-				if (((pGenericLane->maneuvers = (AllowedManeuvers_t *)calloc(1, sizeof(AllowedManeuvers_t))) == NULL)
-					|| !(ul2bitString(&pGenericLane->maneuvers->buf, pGenericLane->maneuvers->size,
+				if (((pGenericLane->maneuvers = static_cast<AllowedManeuvers_t *>(std::calloc(1, sizeof(AllowedManeuvers_t)))) == NULL)
+					|| !(ul2bitString(&(pGenericLane->maneuvers->buf), pGenericLane->maneuvers->size,
 						pGenericLane->maneuvers->bits_unused, 12, (laneStruct.attributes.to_ulong() >> 8))))
 				{
 					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".AllowedManeuvers" << std::endl;
@@ -308,8 +317,8 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 			// ConnectsToList
 			if (!laneStruct.mpConnectTo.empty())
 			{
-				if (((pGenericLane->connectsTo = (ConnectsToList_t *)calloc(1, sizeof(ConnectsToList_t))) == NULL)
-					|| ((pGenericLane->connectsTo->list.array = (Connection_t **)calloc(laneStruct.mpConnectTo.size(), sizeof(Connection_t *))) == NULL))
+				if (((pGenericLane->connectsTo = static_cast<ConnectsToList_t *>(std::calloc(1, sizeof(ConnectsToList_t)))) == NULL)
+					|| ((pGenericLane->connectsTo->list.array = static_cast<Connection_t **>(std::calloc(laneStruct.mpConnectTo.size(), sizeof(Connection_t *)))) == NULL))
 				{
 					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ConnectsToList" << std::endl;
 					has_error = true;
@@ -319,13 +328,14 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 				int& connListCnt = pGenericLane->connectsTo->list.count;
 				for (const auto& connStruct : laneStruct.mpConnectTo)
 				{
-					if ((pGenericLane->connectsTo->list.array[connListCnt] = (Connection_t *)calloc(1, sizeof(Connection_t))) == NULL)
+					Connection_t* pConnection = static_cast<Connection_t *>(std::calloc(1, sizeof(Connection_t)));
+					if (pConnection == NULL)
 					{
 						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ConnectsToList.Connection" << std::endl;
 						has_error = true;
 						break;
 					}
-					Connection_t* pConnection = pGenericLane->connectsTo->list.array[connListCnt++];
+					pGenericLane->connectsTo->list.array[connListCnt++] = pConnection;
 					// Connection:
 					// -- Required objects ------------------------------------ //
 					//	ConnectingLane
@@ -358,14 +368,13 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 							connecting_maneuvers.set(2);
 							break;
 						case MsgEnum::maneuverType::straightAhead:
-						case MsgEnum::maneuverType::straight:
 							connecting_maneuvers.set(0);
 							break;
 						default:
 							break;
 						}
-						if (((connLane.maneuver = (AllowedManeuvers_t *)calloc(1, sizeof(AllowedManeuvers_t))) == NULL)
-							|| !(ul2bitString(&connLane.maneuver->buf, connLane.maneuver->size,
+						if (((connLane.maneuver = static_cast<AllowedManeuvers_t *>(std::calloc(1, sizeof(AllowedManeuvers_t)))) == NULL)
+							|| !(ul2bitString(&(connLane.maneuver->buf), connLane.maneuver->size,
 								connLane.maneuver->bits_unused, 12, connecting_maneuvers.to_ulong())))
 						{
 							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
@@ -377,8 +386,8 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 					// IntersectionReferenceID
 					if ((connStruct.intersectionId != mapDataIn.id) || (connStruct.regionalId != mapDataIn.regionalId))
 					{
-						if (((pConnection->remoteIntersection = (IntersectionReferenceID_t *)calloc(1, sizeof(IntersectionReferenceID_t))) == NULL)
-							|| ((pConnection->remoteIntersection->region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL))
+						if (((pConnection->remoteIntersection = static_cast<IntersectionReferenceID_t *>(std::calloc(1, sizeof(IntersectionReferenceID_t)))) == NULL)
+							|| ((pConnection->remoteIntersection->region = static_cast<RoadRegulatorID_t *>(std::calloc(1, sizeof(RoadRegulatorID_t)))) == NULL))
 						{
 							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
 							std::cerr << ".ConnectsToList.Connection.IntersectionReferenceID" << std::endl;
@@ -389,9 +398,9 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 						*(pConnection->remoteIntersection->region) = connStruct.regionalId;
 					}
 					// SignalGroupID
-					if (laneStruct.controlPhase != 0)
+					if (laneStruct.controlPhase > 0)
 					{
-						if ((pConnection->signalGroup = (SignalGroupID_t *)calloc(1, sizeof(SignalGroupID_t))) == NULL)
+						if ((pConnection->signalGroup = static_cast<SignalGroupID_t *>(std::calloc(1, sizeof(SignalGroupID_t)))) == NULL)
 						{
 							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
 							std::cerr << ".ConnectsToList.Connection.signalGroup" << std::endl;
@@ -405,589 +414,191 @@ auto mapData2msgFrame_single = [](const MapData_element_t& mapDataIn, MapData_t&
 					break;
 			}
 			// NodeListXY
-			pGenericLane->nodeList.present = NodeListXY_PR_nodes; // NodeSetXY
-			auto& nodeSet = pGenericLane->nodeList.choice.nodes;
-			if ((nodeSet.list.array = (NodeXY_t **)calloc(laneStruct.mpNodes.size(), sizeof(NodeXY_t *))) == NULL)
-			{
-				std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY" << std::endl;
-				has_error = true;
-				break;
-			}
-			nodeSet.list.size = static_cast<int>(laneStruct.mpNodes.size());
-			// NodeSetXY::NodeXY
-			int& nodeListCnt = nodeSet.list.count;
-			for (auto it = laneStruct.mpNodes.cbegin(); it != laneStruct.mpNodes.cend(); ++it)
-			{
-				if ((nodeSet.list.array[nodeListCnt] = (NodeXY_t *)calloc(1, sizeof(NodeXY_t))) == NULL)
+			if (laneStruct.isComputedLane)
+			{ // computed lane
+				pGenericLane->nodeList.present = NodeListXY_PR_computed;
+				auto& computed = pGenericLane->nodeList.choice.computed;
+				computed.referenceLaneId = laneStruct.mpComputedLane.refLaneId;
+				if (std::abs(laneStruct.mpComputedLane.offset_x) <= 2047)
 				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY.NodeXY" << std::endl;
-					has_error = true;
-					break;
-				}
-				// NodeXY::NodeOffsetPointXY
-				NodeXY_t* pNode = nodeSet.list.array[nodeListCnt++];
-				if (it->useXY)
-				{
-					const auto& offset_x = it->offset_x;
-					const auto& offset_y = it->offset_y;
-					uint32_t offset_dist = static_cast<uint32_t>(std::sqrt(offset_x * offset_x + offset_y * offset_y));
-					if (offset_dist <= 511)
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY1;
-						pNode->delta.choice.node_XY1.x = offset_x;
-						pNode->delta.choice.node_XY1.y = offset_y;
-					}
-					else if (offset_dist <= 1023)
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY2;
-						pNode->delta.choice.node_XY2.x = offset_x;
-						pNode->delta.choice.node_XY2.y = offset_y;
-					}
-					else if (offset_dist <= 2047)
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY3;
-						pNode->delta.choice.node_XY3.x = offset_x;
-						pNode->delta.choice.node_XY3.y = offset_y;
-					}
-					else if (offset_dist <= 4096)
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY4;
-						pNode->delta.choice.node_XY4.x = offset_x;
-						pNode->delta.choice.node_XY4.y = offset_y;
-					}
-					else if (offset_dist <= 8191)
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY5;
-						pNode->delta.choice.node_XY5.x = offset_x;
-						pNode->delta.choice.node_XY5.y = offset_y;
-					}
-					else
-					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_XY6;
-						pNode->delta.choice.node_XY6.x = offset_x;
-						pNode->delta.choice.node_XY6.y = offset_y;
-					}
+					computed.offsetXaxis.present = ComputedLane__offsetXaxis_PR_small;
+					computed.offsetXaxis.choice.small = laneStruct.mpComputedLane.offset_x;
 				}
 				else
 				{
-					pNode->delta.present = NodeOffsetPointXY_PR_node_LatLon;
-					pNode->delta.choice.node_LatLon.lat = it->latitude;
-					pNode->delta.choice.node_LatLon.lon = it->longitude;
+					computed.offsetXaxis.present = ComputedLane__offsetXaxis_PR_large;
+					computed.offsetXaxis.choice.large = laneStruct.mpComputedLane.offset_x;
 				}
-				// NodeXY::NodeAttributeSetXY
-				if (it == laneStruct.mpNodes.cbegin())
+				if (std::abs(laneStruct.mpComputedLane.offset_y) <= 2047)
 				{
-					bool laneWidthAdjust  = (laneStruct.width != refLaneWidth);
-					bool speedLimitAdjust = ((approachStruct.type != MsgEnum::approachType::crosswalk) && (approachStruct.speed_limit > 0)
-						&& (approachStruct.speed_limit < MsgEnum::unknown_speed) && (approachStruct.speed_limit != refSpeedLimt));
-					if (laneWidthAdjust || speedLimitAdjust)
-					{
-						if ((pNode->attributes = (NodeAttributeSetXY_t *)calloc(1, sizeof(NodeAttributeSetXY_t))) == NULL)
-						{
-							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY" << std::endl;
-							has_error = true;
-							break;
-						}
-						// lane width adjustment w.r.t. refLaneWidth
-						if (laneWidthAdjust)
-						{
-							if ((pNode->attributes->dWidth = (Offset_B10_t *)calloc(1, sizeof(Offset_B10_t))) == NULL)
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.dWidth" << std::endl;
-								has_error = true;
-								break;
-							}
-							*(pNode->attributes->dWidth) = laneStruct.width - refLaneWidth;
-							refLaneWidth = laneStruct.width;
-						}
-						// speed limit
-						if (speedLimitAdjust)
-						{
-							if (((pNode->attributes->data = (LaneDataAttributeList_t *)calloc(1, sizeof(LaneDataAttributeList_t))) == NULL)
-								|| ((pNode->attributes->data->list.array = (LaneDataAttribute_t **)calloc(1, sizeof(LaneDataAttribute_t *))) == NULL)
-								|| ((pNode->attributes->data->list.array[0] = (LaneDataAttribute_t *)calloc(1, sizeof(LaneDataAttribute_t))) == NULL))
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute" << std::endl;
-								has_error = true;
-								break;
-							}
-							pNode->attributes->data->list.size = 1;
-							pNode->attributes->data->list.count = 1;
-							LaneDataAttribute_t* pdata = pNode->attributes->data->list.array[0];
-							pdata->present = LaneDataAttribute_PR_speedLimits;
-							if (((pdata->choice.speedLimits.list.array = (RegulatorySpeedLimit_t **)calloc(1, sizeof(RegulatorySpeedLimit_t *))) == NULL)
-								|| ((pdata->choice.speedLimits.list.array[0] = (RegulatorySpeedLimit_t *)calloc(1, sizeof(RegulatorySpeedLimit_t))) == NULL))
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute.RegulatorySpeedLimit" << std::endl;
-								has_error = true;
-								break;
-							}
-							pdata->choice.speedLimits.list.size = 1;
-							pdata->choice.speedLimits.list.count = 1;
-							pdata->choice.speedLimits.list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
-							pdata->choice.speedLimits.list.array[0]->speed = approachStruct.speed_limit;
-							refSpeedLimt = approachStruct.speed_limit;
-						}
-					}
-				}
-			}
-			if (has_error)
-				break;
-		}
-		if (has_error)
-			break;
-	}
-	return(!has_error);
-};
-
-/// fill MapData_t structure which specifies speed limit at the approach level
-auto mapData2msgFrame_multi = [](const MapData_element_t& mapDataIn, MapData_t& mapData)->bool
-{	// MapData:
-	// -- Required objects ------------------------------------ //
-	//	msgIssueRevision
-	// -- OPTIONAL objects ------------ including/excluding  -- //
-	//	MinuteOfTheYear                     EXCL
-	//	LayerType                           INCL
-	//	LayerID                             EXCL
-	//	IntersectionGeometryList            INCL
-	//	RoadSegmentList                     EXCL
-	//	DataParameters                      EXCL
-	//	RestrictionClassList                EXCL
-	//	RegionalExtension                   EXCL
-	// -------------------------------------------------------- //
-	std::string prog_name = "mapData2msgFrame_multi: ";
-	std::string allocate_level{"MapData"};
-	// msgIssueRevision
-	mapData.msgIssueRevision	= mapDataIn.mapVersion;
-	// LayerType
-	if ((mapData.layerType = (LayerType_t *)calloc(1, sizeof(LayerType_t))) == NULL)
-	{
-		std::cerr << prog_name << "failed allocate " << allocate_level << ".LayerType" << std::endl;
-		return(false);
-	}
-	*(mapData.layerType) = LayerType_intersectionData;
-	// IntersectionGeometryList - one intersection per MapData, one IntersectionGeometry per distinct speed limit
-	allocate_level += ".IntersectionGeometryList";
-	if (((mapData.intersections = (IntersectionGeometryList_t *)calloc(1, sizeof(IntersectionGeometryList_t))) == NULL)
-		|| ((mapData.intersections->list.array = (IntersectionGeometry_t **)calloc(mapDataIn.speeds.size(), sizeof(IntersectionGeometry_t *))) == NULL))
-	{
-		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
-		return(false);
-	}
-	mapData.intersections->list.size = static_cast<int>(mapDataIn.speeds.size());
-	// loop through distinct speed limits
-	allocate_level += ".IntersectionGeometry";
-	bool has_error = false;  // for earlier return
-	int& geoListCnt = mapData.intersections->list.count;
-	for (const auto& speed_limit : mapDataIn.speeds)
-	{	// get indexes of approaches and number of lanes having the targeted speed limit
-		std::vector<uint8_t> approachIndex;
-		size_t num_lanes = 0;
-		for (auto it = mapDataIn.mpApproaches.begin(); it != mapDataIn.mpApproaches.end(); ++it)
-		{
-			if ((it->speed_limit == speed_limit) && (!it->mpLanes.empty()))
-			{
-				approachIndex.push_back((uint8_t)(it - mapDataIn.mpApproaches.begin()));
-				num_lanes += it->mpLanes.size();
-			}
-		}
-		// get the reference lane width for this speed group
-		uint16_t refLaneWidth = mapDataIn.mpApproaches[approachIndex[0]].mpLanes[0].width;
-		// allocate IntersectionGeometry - one per speed group
-		if ((mapData.intersections->list.array[geoListCnt] = (IntersectionGeometry_t *)calloc(1, sizeof(IntersectionGeometry_t))) == NULL)
-		{
-			std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
-			has_error = true;
-			break;
-		}
-		IntersectionGeometry_t* pIntersectionGeometry = mapData.intersections->list.array[geoListCnt];
-		// IntersectionGeometry:
-		// -- Required objects ------------------------------------ //
-		//	IntersectionReferenceID
-		//	MsgCount
-		//	Position3D
-		//	LaneList
-		// -- OPTIONAL objects ------------ including/excluding  -- //
-		//	DescriptiveName                     EXCL
-		//	LaneWidth                           INCL
-		//	SpeedLimitList                      INCL
-		//	PreemptPriorityList                 EXCL
-		//	RegionalExtension                   EXCL
-		// -------------------------------------------------------- //
-		// IntersectionReferenceID:
-		// -- Required objects ------------------------------------ //
-		//	IntersectionID
-		// -- OPTIONAL objects ------------ including/excluding  -- //
-		//	RoadRegulatorID                     INCL
-		// -------------------------------------------------------- //
-		pIntersectionGeometry->id.id = mapDataIn.id;
-		if ((pIntersectionGeometry->id.region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL)
-		{
-			std::cerr << prog_name << "failed allocate " << allocate_level << ".id.region" << std::endl;
-			has_error = true;
-			break;
-		}
-		*(pIntersectionGeometry->id.region) = mapDataIn.regionalId;
-		// MsgCount
-		pIntersectionGeometry->revision = geoListCnt++;
-		// Position3D
-		pIntersectionGeometry->refPoint.lat = mapDataIn.geoRef.latitude;
-		pIntersectionGeometry->refPoint.Long = mapDataIn.geoRef.longitude;
-		if (mapDataIn.attributes.test(0))
-		{ // include elevation data
-			if ((pIntersectionGeometry->refPoint.elevation = (DSRC_Elevation_t *)calloc(1, sizeof(DSRC_Elevation_t))) == NULL)
-			{
-				std::cerr << prog_name << "failed allocate " << allocate_level << ".Position3D.Elevation" << std::endl;
-				has_error = true;
-				break;
-			}
-			*(pIntersectionGeometry->refPoint.elevation) = mapDataIn.geoRef.elevation;
-		}
-		// LaneWidth
-		if ((pIntersectionGeometry->laneWidth = (LaneWidth_t *)calloc(1, sizeof(LaneWidth_t))) == NULL)
-		{
-			std::cerr << prog_name << "failed allocate " << allocate_level << ".LaneWidth" << std::endl;
-			has_error = true;
-			break;
-		}
-		*(pIntersectionGeometry->laneWidth) = refLaneWidth;
-		// SpeedLimitList
-		if ((speed_limit > 0) && (speed_limit < MsgEnum::unknown_speed))
-		{ // 0 = crosswalk, MsgEnum::unknown_speed = speed limit not available on vehicular lanes
-			if (((pIntersectionGeometry->speedLimits = (SpeedLimitList_t *)calloc(1, sizeof(SpeedLimitList_t))) == NULL)
-				|| ((pIntersectionGeometry->speedLimits->list.array = (RegulatorySpeedLimit_t **)calloc(1, sizeof(RegulatorySpeedLimit_t *))) == NULL)
-				|| ((pIntersectionGeometry->speedLimits->list.array[0] = (RegulatorySpeedLimit_t *)calloc(1, sizeof(RegulatorySpeedLimit_t))) == NULL))
-			{
-				std::cerr << prog_name << "failed allocate " << allocate_level;
-				std::cerr << ".SpeedLimitList.RegulatorySpeedLimit" << std::endl;
-				has_error = true;
-				break;
-			}
-			pIntersectionGeometry->speedLimits->list.size = 1;
-			pIntersectionGeometry->speedLimits->list.count = 1;
-			pIntersectionGeometry->speedLimits->list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
-			pIntersectionGeometry->speedLimits->list.array[0]->speed = speed_limit;
-		}
-		// LaneList
-		std::string branch_level{".LaneList"};
-		if ((pIntersectionGeometry->laneSet.list.array = (GenericLane_t **)calloc(num_lanes, sizeof(GenericLane_t *))) == NULL)
-		{
-			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
-			has_error = true;
-			break;
-		}
-		pIntersectionGeometry->laneSet.list.size = static_cast<int>(num_lanes);
-		branch_level += ".GenericLane";
-		int& laneListCnt = pIntersectionGeometry->laneSet.list.count;
-		// loop through approaches / lanes
-		for (const auto& i_approach : approachIndex)
-		{
-			const auto& approachStruct = mapDataIn.mpApproaches[i_approach];
-			for (const auto& laneStruct : approachStruct.mpLanes)
-			{
-				if ((pIntersectionGeometry->laneSet.list.array[laneListCnt] = (GenericLane_t *)calloc(1, sizeof(GenericLane_t))) == NULL)
-				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
-					has_error = true;
-					break;
-				}
-				GenericLane_t* pGenericLane = pIntersectionGeometry->laneSet.list.array[laneListCnt++];
-				// GenericLane:
-				// -- Required objects ------------------------------------ //
-				//	LaneID
-				//	LaneAttributes
-				//	NodeListXY
-				// -- OPTIONAL objects ------------ including/excluding  -- //
-				//	DescriptiveName                     EXCL
-				//	ApproachID (inbound/outbound)       INCL
-				//	AllowedManeuvers                    INCL
-				//	ConnectsToList                      INCL
-				//	OverlayLaneList                     EXCL
-				//	RegionalExtension                   EXCL
-				// -------------------------------------------------------- //
-				// LaneID
-				pGenericLane->laneID = laneStruct.id;
-				// LaneAttributes::LaneDirection - 2 bits BIT STRING
-				std::bitset<2> direction_attributes;
-				switch(approachStruct.type)
-				{
-				case MsgEnum::approachType::inbound:
-					direction_attributes.set(0);
-					break;
-				case MsgEnum::approachType::outbound:
-					direction_attributes.set(1);
-					break;
-				case MsgEnum::approachType::crosswalk:
-					direction_attributes.set();
-					break;
-				}
-				auto& laneDirection = pGenericLane->laneAttributes.directionalUse;
-				if (!ul2bitString(&laneDirection.buf, laneDirection.size, laneDirection.bits_unused, 2, direction_attributes.to_ulong()))
-				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".LaneAttributes.LaneDirection" << std::endl;
-					has_error = true;
-					break;
-				}
-				// LaneAttributes::LaneSharing - 10 bits BIT STRING - 'not shared' and 'not overlapping'
-				auto& laneSharing = pGenericLane->laneAttributes.sharedWith;
-				if (!ul2bitString(&laneSharing.buf, laneSharing.size, laneSharing.bits_unused, 10, 0))
-				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-					std::cerr << ".LaneAttributes.LaneSharing" << std::endl;
-					has_error = true;
-					break;
-				}
-				// LaneAttributes::LaneTypeAttributes
-				auto& laneTypeAttributes = pGenericLane->laneAttributes.laneType;
-				if (approachStruct.type == MsgEnum::approachType::crosswalk)
-				{ // Crosswalk - 16 bits BIT STRING
-					laneTypeAttributes.present = LaneTypeAttributes_PR_crosswalk;
-					auto& crosswalk = laneTypeAttributes.choice.crosswalk;
-					if (!ul2bitString(&crosswalk.buf, crosswalk.size, crosswalk.bits_unused, 16, laneStruct.attributes.to_ulong()))
-					{
-						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-						std::cerr << ".LaneAttributes.LaneTypeAttributes.Crosswalk" << std::endl;
-						has_error = true;
-						break;
-					}
+					computed.offsetYaxis.present = ComputedLane__offsetYaxis_PR_small;
+					computed.offsetYaxis.choice.small = laneStruct.mpComputedLane.offset_y;
 				}
 				else
-				{ // Vehicle - 8 bits BIT STRING
-					laneTypeAttributes.present = LaneTypeAttributes_PR_vehicle;
-					auto& vehicle = laneTypeAttributes.choice.vehicle;
-					if (!ul2bitString(&vehicle.buf, vehicle.size, vehicle.bits_unused, 8, (laneStruct.attributes.to_ulong() & 0xFF)))
-					{
-						std::cerr << prog_name << "allocate " << allocate_level << branch_level;
-						std::cerr << ".LaneAttributes.LaneTypeAttributes.Vehicle" << std::endl;
-						has_error = true;
-						break;
-					}
-				}
-				// ApproachID
-				switch(approachStruct.type)
 				{
-				case MsgEnum::approachType::outbound:
-					if ((pGenericLane->egressApproach = (ApproachID_t *)calloc(1, sizeof(ApproachID_t))) == NULL)
+					computed.offsetYaxis.present = ComputedLane__offsetYaxis_PR_large;
+					computed.offsetYaxis.choice.large = laneStruct.mpComputedLane.offset_y;
+				}
+				if (laneStruct.mpComputedLane.rotateXY != 0)
+				{
+					if ((computed.rotateXY = static_cast<DSRC_Angle_t *>(std::calloc(1, sizeof(DSRC_Angle_t)))) == NULL)
 						has_error = true;
 					else
-						*(pGenericLane->egressApproach) = approachStruct.id;
-					break;
-				case MsgEnum::approachType::inbound:
-				case MsgEnum::approachType::crosswalk:
-					if ((pGenericLane->ingressApproach = (ApproachID_t *)calloc(1, sizeof(ApproachID_t))) == NULL)
+						*computed.rotateXY = laneStruct.mpComputedLane.rotateXY;
+				}
+				if (laneStruct.mpComputedLane.scale_x != 0)
+				{
+					if ((computed.scaleXaxis = static_cast<Scale_B12_t *>(std::calloc(1, sizeof(Scale_B12_t)))) == NULL)
 						has_error = true;
 					else
-						*(pGenericLane->ingressApproach) = approachStruct.id;
-					break;
+						*computed.scaleXaxis = laneStruct.mpComputedLane.scale_x;
+				}
+				if (laneStruct.mpComputedLane.scale_y != 0)
+				{
+					if ((computed.scaleYaxis = static_cast<Scale_B12_t *>(std::calloc(1, sizeof(Scale_B12_t)))) == NULL)
+						has_error = true;
+					else
+						*computed.scaleYaxis = laneStruct.mpComputedLane.scale_y;
 				}
 				if (has_error)
 				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ApproachID" << std::endl;
+					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY.ComputedLane" << std::endl;
+					has_error = true;
 					break;
 				}
-				// AllowedManeuvers - 12 bits BIT STRING
-				if (approachStruct.type != MsgEnum::approachType::crosswalk)
-				{
-					if (((pGenericLane->maneuvers = (AllowedManeuvers_t *)calloc(1, sizeof(AllowedManeuvers_t))) == NULL)
-						|| !(ul2bitString(&pGenericLane->maneuvers->buf, pGenericLane->maneuvers->size,
-							pGenericLane->maneuvers->bits_unused, 12, (laneStruct.attributes.to_ulong() >> 8))))
-					{
-						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".AllowedManeuvers" << std::endl;
-						has_error = true;
-						break;
-					}
-				}
-				// ConnectsToList
-				if (!laneStruct.mpConnectTo.empty())
-				{
-					if (((pGenericLane->connectsTo = (ConnectsToList_t *)calloc(1, sizeof(ConnectsToList_t))) == NULL)
-						|| ((pGenericLane->connectsTo->list.array = (Connection_t **)calloc(laneStruct.mpConnectTo.size(), sizeof(Connection_t *))) == NULL))
-					{
-						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ConnectsToList" << std::endl;
-						has_error = true;
-						break;
-					}
-					pGenericLane->connectsTo->list.size = static_cast<int>(laneStruct.mpConnectTo.size());
-					int& connListCnt = pGenericLane->connectsTo->list.count;
-					for (const auto& connStruct : laneStruct.mpConnectTo)
-					{
-						if ((pGenericLane->connectsTo->list.array[connListCnt] = (Connection_t *)calloc(1, sizeof(Connection_t))) == NULL)
-						{
-							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ConnectsToList.Connection" << std::endl;
-							has_error = true;
-							break;
-						}
-						Connection_t* pConnection = pGenericLane->connectsTo->list.array[connListCnt++];
-						// Connection:
-						// -- Required objects ------------------------------------ //
-						//	ConnectingLane
-						// -- OPTIONAL objects ------------ including/excluding  -- //
-						//	IntersectionReferenceID             INCL
-						//	SignalGroupID                       INCL
-						//	RestrictionClassID                  EXCL
-						//	LaneConnectionID                    EXCL
-						// -------------------------------------------------------- //
-
-						auto& connLane = pConnection->connectingLane;
-						// ConnectingLane
-						// -- Required objects ------------------------------------ //
-						//	LaneID
-						// -- OPTIONAL objects ------------ including/excluding  -- //
-						//	AllowedManeuvers                    INCL
-						// -------------------------------------------------------- //
-						connLane.lane = connStruct.laneId;
-						if (connStruct.laneManeuver != MsgEnum::maneuverType::unavailable)
-						{ // AllowedManeuvers - 12 bits BIT STRING
-							std::bitset<12> connecting_maneuvers;
-							switch(connStruct.laneManeuver)
-							{
-							case MsgEnum::maneuverType::uTurn:
-								connecting_maneuvers.set(3);
-								break;
-							case MsgEnum::maneuverType::leftTurn:
-								connecting_maneuvers.set(1);
-								break;
-							case MsgEnum::maneuverType::rightTurn:
-								connecting_maneuvers.set(2);
-								break;
-							case MsgEnum::maneuverType::straightAhead:
-							case MsgEnum::maneuverType::straight:
-								connecting_maneuvers.set(0);
-								break;
-							default:
-								break;
-							}
-							if (((connLane.maneuver = (AllowedManeuvers_t *)calloc(1, sizeof(AllowedManeuvers_t))) == NULL)
-								|| !(ul2bitString(&connLane.maneuver->buf, connLane.maneuver->size,
-									connLane.maneuver->bits_unused, 12, connecting_maneuvers.to_ulong())))
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".ConnectsToList.Connection.connectingLane.AllowedManeuvers" << std::endl;
-								has_error = true;
-								break;
-							}
-						}
-						// IntersectionReferenceID
-						if ((connStruct.intersectionId != mapDataIn.id) || (connStruct.regionalId != mapDataIn.regionalId))
-						{
-							if (((pConnection->remoteIntersection = (IntersectionReferenceID_t *)calloc(1, sizeof(IntersectionReferenceID_t))) == NULL)
-								|| ((pConnection->remoteIntersection->region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL))
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".ConnectsToList.Connection.IntersectionReferenceID" << std::endl;
-								has_error = true;
-								break;
-							}
-							pConnection->remoteIntersection->id = connStruct.intersectionId;
-							*(pConnection->remoteIntersection->region) = connStruct.regionalId;
-						}
-						// SignalGroupID
-						if (laneStruct.controlPhase != 0)
-						{
-							if ((pConnection->signalGroup = (SignalGroupID_t *)calloc(1, sizeof(SignalGroupID_t))) == NULL)
-							{
-								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-								std::cerr << ".ConnectsToList.Connection.signalGroup" << std::endl;
-								has_error = true;
-								break;
-							}
-							*(pConnection->signalGroup) = laneStruct.controlPhase;
-						}
-					} // end of loop through connectsTo
-					if (has_error)
-						break;
-				}
-				// NodeListXY
-				pGenericLane->nodeList.present = NodeListXY_PR_nodes; // NodeSetXY
+			}
+			else
+			{	// NodeSetXY
+				pGenericLane->nodeList.present = NodeListXY_PR_nodes;
 				auto& nodeSet = pGenericLane->nodeList.choice.nodes;
-				if ((nodeSet.list.array = (NodeXY_t **)calloc(laneStruct.mpNodes.size(), sizeof(NodeXY_t *))) == NULL)
+				if ((nodeSet.list.array = static_cast<NodeXY_t **>(std::calloc(laneStruct.mpNodes.size(), sizeof(NodeXY_t *)))) == NULL)
 				{
-					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY" << std::endl;
+					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY.NodeSetXY" << std::endl;
 					has_error = true;
 					break;
 				}
 				nodeSet.list.size = static_cast<int>(laneStruct.mpNodes.size());
 				// NodeSetXY::NodeXY
 				int& nodeListCnt = nodeSet.list.count;
-				for (size_t i_node = 0; i_node < laneStruct.mpNodes.size(); i_node++)
+				for (auto it = laneStruct.mpNodes.cbegin(); it != laneStruct.mpNodes.cend(); ++it)
 				{
-					const auto& nodeStruct = laneStruct.mpNodes[i_node];
-					if ((nodeSet.list.array[nodeListCnt] = (NodeXY_t *)calloc(1, sizeof(NodeXY_t))) == NULL)
+					NodeXY_t* pNode = static_cast<NodeXY_t *>(std::calloc(1, sizeof(NodeXY_t)));
+					if (pNode == NULL)
 					{
-						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY.NodeXY" << std::endl;
+						std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".NodeListXY.NodeSetXY.NodeXY" << std::endl;
 						has_error = true;
 						break;
 					}
+					nodeSet.list.array[nodeListCnt++] = pNode;
+					NodeOffsetPointXY_t& delta = pNode->delta;
 					// NodeXY::NodeOffsetPointXY
-					NodeXY_t* pNode = nodeSet.list.array[nodeListCnt++];
-					if (nodeStruct.useXY)
+					if (it->useXY)
 					{
-						const auto& offset_x = nodeStruct.offset_x;
-						const auto& offset_y = nodeStruct.offset_y;
-						uint32_t offset_dist = static_cast<uint32_t>(std::sqrt(offset_x * offset_x + offset_y * offset_y));
+						const auto& offset_x = it->offset_x;
+						const auto& offset_y = it->offset_y;
+						uint32_t offset_dist = static_cast<uint32_t>(std::max(std::abs(offset_x), std::abs(offset_y)));
 						if (offset_dist <= 511)
 						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY1;
-							pNode->delta.choice.node_XY1.x = offset_x;
-							pNode->delta.choice.node_XY1.y = offset_y;
+							delta.present = NodeOffsetPointXY_PR_node_XY1;
+							delta.choice.node_XY1.x = offset_x;
+							delta.choice.node_XY1.y = offset_y;
 						}
 						else if (offset_dist <= 1023)
 						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY2;
-							pNode->delta.choice.node_XY2.x = offset_x;
-							pNode->delta.choice.node_XY2.y = offset_y;
+							delta.present = NodeOffsetPointXY_PR_node_XY2;
+							delta.choice.node_XY2.x = offset_x;
+							delta.choice.node_XY2.y = offset_y;
 						}
 						else if (offset_dist <= 2047)
 						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY3;
-							pNode->delta.choice.node_XY3.x = offset_x;
-							pNode->delta.choice.node_XY3.y = offset_y;
+							delta.present = NodeOffsetPointXY_PR_node_XY3;
+							delta.choice.node_XY3.x = offset_x;
+							delta.choice.node_XY3.y = offset_y;
 						}
 						else if (offset_dist <= 4096)
 						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY4;
-							pNode->delta.choice.node_XY4.x = offset_x;
-							pNode->delta.choice.node_XY4.y = offset_y;
+							delta.present = NodeOffsetPointXY_PR_node_XY4;
+							delta.choice.node_XY4.x = offset_x;
+							delta.choice.node_XY4.y = offset_y;
 						}
 						else if (offset_dist <= 8191)
 						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY5;
-							pNode->delta.choice.node_XY5.x = offset_x;
-							pNode->delta.choice.node_XY5.y = offset_y;
+							delta.present = NodeOffsetPointXY_PR_node_XY5;
+							delta.choice.node_XY5.x = offset_x;
+							delta.choice.node_XY5.y = offset_y;
 						}
 						else
-						{
-							pNode->delta.present = NodeOffsetPointXY_PR_node_XY6;
-							pNode->delta.choice.node_XY6.x = offset_x;
-							pNode->delta.choice.node_XY6.y = offset_y;
+						{ // within 32767 centimeters
+							delta.present = NodeOffsetPointXY_PR_node_XY6;
+							delta.choice.node_XY6.x = offset_x;
+							delta.choice.node_XY6.y = offset_y;
 						}
 					}
 					else
 					{
-						pNode->delta.present = NodeOffsetPointXY_PR_node_LatLon;
-						pNode->delta.choice.node_LatLon.lat = nodeStruct.latitude;
-						pNode->delta.choice.node_LatLon.lon = nodeStruct.longitude;
+						delta.present = NodeOffsetPointXY_PR_node_LatLon;
+						delta.choice.node_LatLon.lat = it->latitude;
+						delta.choice.node_LatLon.lon = it->longitude;
 					}
-					// NodeXY::NodeAttributeSetXY - lane width adjustment w.r.t. refLaneWidth
-					if ((laneStruct.width != refLaneWidth) && (i_node == 0))
+					// NodeXY::NodeAttributeSetXY
+					if (it == laneStruct.mpNodes.cbegin())
 					{
-						if (((pNode->attributes = (NodeAttributeSetXY_t *)calloc(1, sizeof(NodeAttributeSetXY_t))) == NULL)
-							|| ((pNode->attributes->dWidth = (Offset_B10_t *)calloc(1, sizeof(Offset_B10_t))) == NULL))
+						bool laneWidthAdjust  = (laneStruct.width != refLaneWidth);
+						bool speedLimitAdjust = ((approachStruct.type != MsgEnum::approachType::crosswalk) && (approachStruct.speed_limit > 0)
+							&& (approachStruct.speed_limit < MsgEnum::unknown_speed) && (approachStruct.speed_limit != refSpeedLimt));
+						if (laneWidthAdjust || speedLimitAdjust)
 						{
-							std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
-							std::cerr << ".NodeListXY.NodeXY.NodeAttributeSetXY" << std::endl;
-							has_error = true;
-							break;
+							if ((pNode->attributes = static_cast<NodeAttributeSetXY_t *>(std::calloc(1, sizeof(NodeAttributeSetXY_t)))) == NULL)
+							{
+								std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+								std::cerr << ".NodeListXY.NodeSetXY.NodeXY.NodeAttributeSetXY" << std::endl;
+								has_error = true;
+								break;
+							}
+							if (laneWidthAdjust)
+							{ // lane width adjustment w.r.t. refLaneWidth
+								if ((pNode->attributes->dWidth = static_cast<Offset_B10_t *>(std::calloc(1, sizeof(Offset_B10_t)))) == NULL)
+								{
+									std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+									std::cerr << ".NodeListXY.NodeSetXY.NodeXY.NodeAttributeSetXY.dWidth" << std::endl;
+									has_error = true;
+									break;
+								}
+								*(pNode->attributes->dWidth) = static_cast<Offset_B10_t>(laneStruct.width) - static_cast<Offset_B10_t>(refLaneWidth);
+								refLaneWidth = laneStruct.width;
+							}
+							if (speedLimitAdjust)
+							{ // speed limit adjustment w.r.t. refSpeedLimt
+								if (((pNode->attributes->data = static_cast<LaneDataAttributeList_t *>(std::calloc(1, sizeof(LaneDataAttributeList_t)))) == NULL)
+									|| ((pNode->attributes->data->list.array = static_cast<LaneDataAttribute_t **>(std::calloc(1, sizeof(LaneDataAttribute_t *)))) == NULL)
+									|| ((pNode->attributes->data->list.array[0] = static_cast<LaneDataAttribute_t *>(std::calloc(1, sizeof(LaneDataAttribute_t)))) == NULL))
+								{
+									std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+									std::cerr << ".NodeListXY.NodeSetXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute" << std::endl;
+									has_error = true;
+									break;
+								}
+								pNode->attributes->data->list.size = 1;
+								pNode->attributes->data->list.count = 1;
+								LaneDataAttribute_t* pdata = pNode->attributes->data->list.array[0];
+								pdata->present = LaneDataAttribute_PR_speedLimits;
+								if (((pdata->choice.speedLimits.list.array = static_cast<RegulatorySpeedLimit_t **>(std::calloc(1, sizeof(RegulatorySpeedLimit_t *)))) == NULL)
+									|| ((pdata->choice.speedLimits.list.array[0] = static_cast<RegulatorySpeedLimit_t *>(std::calloc(1, sizeof(RegulatorySpeedLimit_t)))) == NULL))
+								{
+									std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
+									std::cerr << ".NodeListXY.NodeSetXY.NodeXY.NodeAttributeSetXY.LaneDataAttribute.RegulatorySpeedLimit" << std::endl;
+									has_error = true;
+									break;
+								}
+								pdata->choice.speedLimits.list.size = 1;
+								pdata->choice.speedLimits.list.count = 1;
+								pdata->choice.speedLimits.list.array[0]->type  = SpeedLimitType_vehicleMaxSpeed;
+								pdata->choice.speedLimits.list.array[0]->speed = approachStruct.speed_limit;
+								refSpeedLimt = approachStruct.speed_limit;
+							}
 						}
-						*(pNode->attributes->dWidth) = laneStruct.width - refLaneWidth;
 					}
 				}
-				if (has_error)
-					break;
 			}
 			if (has_error)
 				break;
@@ -1025,8 +636,8 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	// IntersectionStateList - one intersection per SPAT
 	std::string prog_name = "spat2msgFrame: ";
 	std::string allocate_level{"SPAT.IntersectionStateList.IntersectionState"};
-	if (((spat.intersections.list.array = (IntersectionState_t **)calloc(1, sizeof(IntersectionState_t *))) == NULL)
-		|| ((spat.intersections.list.array[0] = (IntersectionState_t *)calloc(1, sizeof(IntersectionState_t))) == NULL))
+	if (((spat.intersections.list.array = static_cast<IntersectionState_t **>(std::calloc(1, sizeof(IntersectionState_t *)))) == NULL)
+		|| ((spat.intersections.list.array[0] = static_cast<IntersectionState_t *>(std::calloc(1, sizeof(IntersectionState_t)))) == NULL))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
@@ -1055,7 +666,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	//	RoadRegulatorID                     INCL
 	// -------------------------------------------------------- //
 	pIntsectionState->id.id = spatIn.id;
-	if ((pIntsectionState->id.region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL)
+	if ((pIntsectionState->id.region = static_cast<RoadRegulatorID_t *>(std::calloc(1, sizeof(RoadRegulatorID_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".id.region" << std::endl;
 		return(false);
@@ -1064,7 +675,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	// MsgCount
 	pIntsectionState->revision = spatIn.msgCnt;
 	// IntersectionStatusObject - 16 bits BIT STRING
-	if (!ul2bitString(&pIntsectionState->status.buf, pIntsectionState->status.size,
+	if (!ul2bitString(&(pIntsectionState->status.buf), pIntsectionState->status.size,
 		pIntsectionState->status.bits_unused, 16, spatIn.status.to_ulong()))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".IntersectionStatusObject" << std::endl;
@@ -1073,7 +684,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	// TimeStamp
 	if (spatIn.timeStampMinute < MsgEnum::invalid_timeStampMinute)
 	{
-		if ((pIntsectionState->moy = (MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+		if ((pIntsectionState->moy = static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MinuteOfTheYear" << std::endl;
 			return(false);
@@ -1082,7 +693,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	}
 	if (spatIn.timeStampSec < 0xFFFF)
 	{
-		if ((pIntsectionState->timeStamp = (DSecond_t *)calloc(1, sizeof(DSecond_t))) == NULL)
+		if ((pIntsectionState->timeStamp = static_cast<DSecond_t *>(std::calloc(1, sizeof(DSecond_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".timeStamp" << std::endl;
 			return(false);
@@ -1091,8 +702,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 	}
 	// MovementList
 	allocate_level += ".MovementList"; // one MovementState per vehicular/pedestrian signal group
-	if ((pIntsectionState->states.list.array =
-		(MovementState_t **)calloc(signalGroupArray.size(), sizeof(MovementState_t *))) == NULL)
+	if ((pIntsectionState->states.list.array = static_cast<MovementState_t **>(std::calloc(signalGroupArray.size(), sizeof(MovementState_t *)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
@@ -1107,13 +717,14 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 		const PhaseState_element_t& phaseState = (signal_group < 8) ?
 			spatIn.phaseState[signal_group] : spatIn.pedPhaseState[signal_group - 8];
 		// allocate MovementState object
-		if ((pIntsectionState->states.list.array[stateListCnt] = (MovementState_t *)calloc(1, sizeof(MovementState_t))) == NULL)
+		MovementState_t* pMovementState = static_cast<MovementState_t *>(std::calloc(1, sizeof(MovementState_t)));
+		if (pMovementState == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 			has_error = true;
 			break;
 		}
-		MovementState_t* pMovementState = pIntsectionState->states.list.array[stateListCnt++];
+		pIntsectionState->states.list.array[stateListCnt++] = pMovementState;
 		// MovementState
 		// -- Required objects ------------------------------------ //
 		//	SignalGroupID
@@ -1127,8 +738,8 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 		pMovementState->signalGroup = signal_group + 1;
 		// MovementEventList - one MovementEvent per movement
 		std::string branch_level(".MovementEventList.MovementEvent");
-		if (((pMovementState->state_time_speed.list.array = (MovementEvent_t **)calloc(1, sizeof(MovementEvent_t *))) == NULL)
-			|| ((pMovementState->state_time_speed.list.array[0] = (MovementEvent_t *)calloc(1, sizeof(MovementEvent_t))) == NULL))
+		if (((pMovementState->state_time_speed.list.array = static_cast<MovementEvent_t **>(std::calloc(1, sizeof(MovementEvent_t *)))) == NULL)
+			|| ((pMovementState->state_time_speed.list.array[0] = static_cast<MovementEvent_t *>(std::calloc(1, sizeof(MovementEvent_t)))) == NULL))
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
 			has_error = true;
@@ -1160,7 +771,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 		// -------------------------------------------------------- //
 		if (phaseState.minEndTime < MsgEnum::unknown_timeDetail)
 		{
-			if ((pMovementEvent->timing = (TimeChangeDetails *)calloc(1, sizeof(TimeChangeDetails))) == NULL)
+			if ((pMovementEvent->timing = static_cast<TimeChangeDetails *>(std::calloc(1, sizeof(TimeChangeDetails)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
 				has_error = true;
@@ -1171,7 +782,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 			// startTime
 			if (phaseState.startTime < MsgEnum::unknown_timeDetail)
 			{
-				if ((pMovementEvent->timing->startTime = (DSRC_TimeMark_t *)calloc(1, sizeof(DSRC_TimeMark_t))) == NULL)
+				if ((pMovementEvent->timing->startTime = static_cast<DSRC_TimeMark_t *>(std::calloc(1, sizeof(DSRC_TimeMark_t)))) == NULL)
 				{
 					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".startTime" << std::endl;
 					has_error = true;
@@ -1182,7 +793,7 @@ auto spat2msgFrame = [](const SPAT_element_t& spatIn, SPAT_t& spat)->bool
 			// maxEndTime
 			if (phaseState.maxEndTime < MsgEnum::unknown_timeDetail)
 			{
-				if ((pMovementEvent->timing->maxEndTime = (DSRC_TimeMark_t *)calloc(1, sizeof(DSRC_TimeMark_t))) == NULL)
+				if ((pMovementEvent->timing->maxEndTime = static_cast<DSRC_TimeMark_t *>(std::calloc(1, sizeof(DSRC_TimeMark_t)))) == NULL)
 				{
 					std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".maxEndTime" << std::endl;
 					has_error = true;
@@ -1234,7 +845,7 @@ auto bsm2msgFrame = [](const BSM_element_t& bsmIn, BasicSafetyMessage_t& bsm)->b
 	allocate_level += ".BrakeSystemStatus";
 	auto& brakeSystemStatus = coreData.brakes;
 	auto& wheelBrakes = brakeSystemStatus.wheelBrakes;  // SIZE (5) BIT STRING
-	if (!ul2bitString(&wheelBrakes.buf, wheelBrakes.size, wheelBrakes.bits_unused, 5, bsmIn.brakeAppliedStatus.to_ulong()))
+	if (!ul2bitString(&(wheelBrakes.buf), wheelBrakes.size, wheelBrakes.bits_unused, 5, bsmIn.brakeAppliedStatus.to_ulong()))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".BrakeAppliedStatus" << std::endl;
 		return(false);
@@ -1270,7 +881,7 @@ auto rtcm2msgFrame = [](const RTCM_element_t& rtcmIn, RTCMcorrections_t& rtcm)->
 	// MinuteOfTheYear
 	if (rtcmIn.timeStampMinute < MsgEnum::invalid_timeStampMinute)
 	{
-		if ((rtcm.timeStamp = (MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+		if ((rtcm.timeStamp = static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MinuteOfTheYear" << std::endl;
 			return(false);
@@ -1279,8 +890,8 @@ auto rtcm2msgFrame = [](const RTCM_element_t& rtcmIn, RTCMcorrections_t& rtcm)->
 	}
 	// RTCMmessageList - one payload per RTCM
 	allocate_level += ".RTCMmessageList.RTCMmessage";
-	if (((rtcm.msgs.list.array = (RTCMmessage_t **)calloc(1, sizeof(RTCMmessage_t *))) == NULL)
-		|| ((rtcm.msgs.list.array[0] = (RTCMmessage_t *)calloc(1, sizeof(RTCMmessage_t))) == NULL))
+	if (((rtcm.msgs.list.array = static_cast<RTCMmessage_t **>(std::calloc(1, sizeof(RTCMmessage_t *)))) == NULL)
+		|| ((rtcm.msgs.list.array[0] = static_cast<RTCMmessage_t *>(std::calloc(1, sizeof(RTCMmessage_t)))) == NULL))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
@@ -1321,7 +932,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// MinuteOfTheYear
 	if (srmIn.timeStampMinute < MsgEnum::invalid_timeStampMinute)
 	{
-		if ((srm.timeStamp = (MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+		if ((srm.timeStamp = static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MinuteOfTheYear" << std::endl;
 			return(false);
@@ -1331,7 +942,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// MsgCount
 	if (srmIn.msgCnt < 0xFF)
 	{
-		if ((srm.sequenceNumber = (DSRC_MsgCount_t *)calloc(1, sizeof(DSRC_MsgCount_t))) == NULL)
+		if ((srm.sequenceNumber = static_cast<DSRC_MsgCount_t *>(std::calloc(1, sizeof(DSRC_MsgCount_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MsgCount" << std::endl;
 			return(false);
@@ -1340,9 +951,9 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	}
 	// SignalRequestList - request for one intersection
 	std::string branch_level(".SignalRequestList.SignalRequestPackage");
-	if (((srm.requests = (SignalRequestList_t *)calloc(1, sizeof(SignalRequestList_t))) == NULL)
-		|| ((srm.requests->list.array = (SignalRequestPackage_t **)calloc(1, sizeof(SignalRequestPackage_t *))) == NULL)
-		|| ((srm.requests->list.array[0] = (SignalRequestPackage_t *)calloc(1, sizeof(SignalRequestPackage_t))) == NULL))
+	if (((srm.requests = static_cast<SignalRequestList_t *>(std::calloc(1, sizeof(SignalRequestList_t)))) == NULL)
+		|| ((srm.requests->list.array = static_cast<SignalRequestPackage_t **>(std::calloc(1, sizeof(SignalRequestPackage_t *)))) == NULL)
+		|| ((srm.requests->list.array[0] = static_cast<SignalRequestPackage_t *>(std::calloc(1, sizeof(SignalRequestPackage_t)))) == NULL))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << std::endl;
 		return(false);
@@ -1362,7 +973,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// ETA
 	if (srmIn.ETAminute < MsgEnum::invalid_timeStampMinute)
 	{
-		if ((pSignalRequestPackage->minute = (MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+		if ((pSignalRequestPackage->minute = static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ETAminute" << std::endl;
 			return(false);
@@ -1371,7 +982,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	}
 	if (srmIn.ETAsec < 0xFFFF)
 	{
-		if ((pSignalRequestPackage->second = (DSecond_t *)calloc(1, sizeof(DSecond_t))) == NULL)
+		if ((pSignalRequestPackage->second = static_cast<DSecond_t *>(std::calloc(1, sizeof(DSecond_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".ETAsec" << std::endl;
 			return(false);
@@ -1381,7 +992,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// duration
 	if (srmIn.duration < 0xFFFF)
 	{
-		if ((pSignalRequestPackage->duration = (DSecond_t *)calloc(1, sizeof(DSecond_t))) == NULL)
+		if ((pSignalRequestPackage->duration = static_cast<DSecond_t *>(std::calloc(1, sizeof(DSecond_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level << ".duration" << std::endl;
 			return(false);
@@ -1406,7 +1017,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	//	RoadRegulatorID                     INCL
 	// -------------------------------------------------------- //
 	signalRequest.id.id = srmIn.intId;
-	if ((signalRequest.id.region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL)
+	if ((signalRequest.id.region = static_cast<RoadRegulatorID_t *>(std::calloc(1, sizeof(RoadRegulatorID_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
 		std::cerr << ".SignalRequest.SignalRequest.id.region" << std::endl;
@@ -1431,7 +1042,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// outBoundLane
 	if (!((srmIn.outApproachId == 0) && (srmIn.outLaneId == 0)))
 	{
-		if ((signalRequest.outBoundLane = (IntersectionAccessPoint_t *)calloc(1, sizeof(IntersectionAccessPoint_t))) == NULL)
+		if ((signalRequest.outBoundLane = static_cast<IntersectionAccessPoint_t *>(std::calloc(1, sizeof(IntersectionAccessPoint_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << branch_level;
 			std::cerr << ".SignalRequest.outBoundLane" << std::endl;
@@ -1472,7 +1083,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 		return(false);
 	}
 	// RequestorType
-	if ((requestor.type = (RequestorType_t *)calloc(1, sizeof(RequestorType_t))) == NULL)
+	if ((requestor.type = static_cast<RequestorType_t *>(std::calloc(1, sizeof(RequestorType_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".RequestorType" << std::endl;
 		return(false);
@@ -1490,14 +1101,14 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	// BasicVehicleRole
 	requestor.type->role = static_cast<BasicVehicleRole_t>(srmIn.vehRole);
 	// VehicleType
-	if ((requestor.type->hpmsType = (VehicleType_t *)calloc(1, sizeof(VehicleType_t))) == NULL)
+	if ((requestor.type->hpmsType = static_cast<VehicleType_t *>(std::calloc(1, sizeof(VehicleType_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".RequestorType.VehicleType" << std::endl;
 		return(false);
 	}
 	*(requestor.type->hpmsType) = static_cast<VehicleType_t>(srmIn.vehType);
 	// RequestorPositionVector
-	if ((requestor.position = (RequestorPositionVector_t *)calloc(1, sizeof(RequestorPositionVector_t))) == NULL)
+	if ((requestor.position = static_cast<RequestorPositionVector_t *>(std::calloc(1, sizeof(RequestorPositionVector_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".RequestorPositionVector" << std::endl;
 		return(false);
@@ -1514,7 +1125,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	requestor.position->position.Long = srmIn.longitude;
 	if (srmIn.elevation > MsgEnum::unknown_elevation)
 	{
-		if ((requestor.position->position.elevation = (DSRC_Elevation_t *)calloc(1, sizeof(DSRC_Elevation_t))) == NULL)
+		if ((requestor.position->position.elevation = static_cast<DSRC_Elevation_t *>(std::calloc(1, sizeof(DSRC_Elevation_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level;
 			std::cerr	<< ".RequestorPositionVector.Position3D.elevation" << std::endl;
@@ -1523,7 +1134,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 		*(requestor.position->position.elevation) = srmIn.elevation;
 	}
 	// heading
-	if ((requestor.position->heading = (DSRC_Angle_t *)calloc(1, sizeof(DSRC_Angle_t))) == NULL)
+	if ((requestor.position->heading = static_cast<DSRC_Angle_t *>(std::calloc(1, sizeof(DSRC_Angle_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level;
 		std::cerr	<< ".RequestorPositionVector.heading" << std::endl;
@@ -1531,7 +1142,7 @@ auto srm2msgFrame = [](const SRM_element_t& srmIn, SignalRequestMessage_t& srm)-
 	}
 	*(requestor.position->heading) = srmIn.heading;
 	// speed
-	if ((requestor.position->speed = (TransmissionAndSpeed_t *)calloc(1, sizeof(TransmissionAndSpeed_t))) == NULL)
+	if ((requestor.position->speed = static_cast<TransmissionAndSpeed_t *>(std::calloc(1, sizeof(TransmissionAndSpeed_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level;
 		std::cerr << ".RequestorPositionVector.speed" << std::endl;
@@ -1563,7 +1174,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	// MinuteOfTheYear
 	if (ssmIn.timeStampMinute < MsgEnum::invalid_timeStampMinute)
 	{
-		if ((ssm.timeStamp = (MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+		if ((ssm.timeStamp = static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MinuteOfTheYear" << std::endl;
 			return(false);
@@ -1573,7 +1184,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	// MsgCount
 	if (ssmIn.msgCnt < 0xFF)
 	{
-		if ((ssm.sequenceNumber = (DSRC_MsgCount_t *)calloc(1, sizeof(DSRC_MsgCount_t))) == NULL)
+		if ((ssm.sequenceNumber = static_cast<DSRC_MsgCount_t *>(std::calloc(1, sizeof(DSRC_MsgCount_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".MsgCount" << std::endl;
 			return(false);
@@ -1581,19 +1192,14 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		*(ssm.sequenceNumber) = ssmIn.msgCnt;
 	}
 	// SignalStatusList - one intersection per SSM
-	allocate_level += ".SignalStatusList";
-	if ((ssm.status.list.array = (SignalStatus_t **)calloc(1, sizeof(SignalStatus_t *))) == NULL)
+	allocate_level += ".SignalStatusList.SignalStatus";
+	if (((ssm.status.list.array = static_cast<SignalStatus_t **>(std::calloc(1, sizeof(SignalStatus_t *)))) == NULL)
+		|| ((ssm.status.list.array[0] = static_cast<SignalStatus_t *>(std::calloc(1, sizeof(SignalStatus_t)))) == NULL))
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
 	}
 	ssm.status.list.size  = 1;
-	allocate_level += ".SignalStatus";
-	if ((ssm.status.list.array[0] = (SignalStatus_t *)calloc(1, sizeof(SignalStatus_t))) == NULL)
-	{
-		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
-		return(false);
-	}
 	ssm.status.list.count = 1;
 	SignalStatus_t* pSignalStatus = ssm.status.list.array[0];
 	// SignalStatus
@@ -1604,7 +1210,6 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	// -- OPTIONAL objects ------------ including/excluding  -- //
 	//	RegionalExtension                   EXCL
 	// -------------------------------------------------------- //
-
 	// MsgCount
 	pSignalStatus->sequenceNumber = ssmIn.updateCnt;
 	// IntersectionReferenceID
@@ -1614,7 +1219,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	//	RoadRegulatorID                     INCL
 	// -------------------------------------------------------- //
 	pSignalStatus->id.id = ssmIn.id;
-	if ((pSignalStatus->id.region = (RoadRegulatorID_t *)calloc(1, sizeof(RoadRegulatorID_t))) == NULL)
+	if ((pSignalStatus->id.region = static_cast<RoadRegulatorID_t *>(std::calloc(1, sizeof(RoadRegulatorID_t)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << ".id.region" << std::endl;
 		return(false);
@@ -1622,26 +1227,26 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	*(pSignalStatus->id.region) = ssmIn.regionalId;
 	// SignalStatusPackageList
 	allocate_level += ".SignalStatusPackageList";
-	if ((pSignalStatus->sigStatus.list.array = (SignalStatusPackage_t **)calloc(ssmIn.mpSignalRequetStatus.size(), sizeof(SignalStatusPackage_t *))) == NULL)
+	if ((pSignalStatus->sigStatus.list.array = static_cast<SignalStatusPackage_t **>(std::calloc(ssmIn.mpSignalRequetStatus.size(), sizeof(SignalStatusPackage_t *)))) == NULL)
 	{
 		std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 		return(false);
 	}
 	pSignalStatus->sigStatus.list.size = static_cast<int>(ssmIn.mpSignalRequetStatus.size());
-
 	// loop through the list of priority/preemption requests
 	allocate_level += ".SignalStatusPackage";
 	bool has_error = false;  // for earlier return
 	int& statusListCnt = pSignalStatus->sigStatus.list.count;
 	for (const auto& signalRequetStatus : ssmIn.mpSignalRequetStatus)
 	{
-		if ((pSignalStatus->sigStatus.list.array[statusListCnt] = (SignalStatusPackage_t *)calloc(1, sizeof(SignalStatusPackage_t))) == NULL)
+		SignalStatusPackage_t* pSignalStatusPackage = static_cast<SignalStatusPackage_t *>(std::calloc(1, sizeof(SignalStatusPackage_t)));
+		if (pSignalStatusPackage == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << std::endl;
 			has_error = true;
 			break;
 		}
-		SignalStatusPackage_t* pSignalStatusPackage = pSignalStatus->sigStatus.list.array[statusListCnt++];
+		pSignalStatus->sigStatus.list.array[statusListCnt++] = pSignalStatusPackage;
 		// SignalStatusPackage
 		// -- Required objects ------------------------------------ //
 		//	inboundOn
@@ -1654,7 +1259,6 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		//	duration                            OPTIONAL
 		//	RegionalExtension                   EXCL
 		// -------------------------------------------------------- //
-
 		// PrioritizationResponseStatus
 		pSignalStatusPackage->status = static_cast<PrioritizationResponseStatus_t>(signalRequetStatus.status);
 		// inboundOn
@@ -1677,7 +1281,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		// outboundOn
 		if ((signalRequetStatus.outApproachId != 0) || (signalRequetStatus.outLaneId != 0))
 		{
-			if ((pSignalStatusPackage->outboundOn = (IntersectionAccessPoint_t *)calloc(1, sizeof(IntersectionAccessPoint_t))) == NULL)
+			if ((pSignalStatusPackage->outboundOn = static_cast<IntersectionAccessPoint_t *>(std::calloc(1, sizeof(IntersectionAccessPoint_t)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << ".outboundOn" << std::endl;
 				has_error = true;
@@ -1697,7 +1301,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		// ETA
 		if (signalRequetStatus.ETAminute < MsgEnum::invalid_timeStampMinute)
 		{
-			if ((pSignalStatusPackage->minute =	(MinuteOfTheYear_t *)calloc(1, sizeof(MinuteOfTheYear_t))) == NULL)
+			if ((pSignalStatusPackage->minute =	static_cast<MinuteOfTheYear_t *>(std::calloc(1, sizeof(MinuteOfTheYear_t)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << ".ETAminute" << std::endl;
 				has_error = true;
@@ -1707,7 +1311,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		}
 		if (signalRequetStatus.ETAsec < 0xFFFF)
 		{
-			if ((pSignalStatusPackage->second = (DSecond_t *)calloc(1, sizeof(DSecond_t))) == NULL)
+			if ((pSignalStatusPackage->second = static_cast<DSecond_t *>(std::calloc(1, sizeof(DSecond_t)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << ".ETAsec" << std::endl;
 				has_error = true;
@@ -1718,7 +1322,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		// duration
 		if (signalRequetStatus.duration < 0xFFFF)
 		{
-			if ((pSignalStatusPackage->duration = (DSecond_t *)calloc(1, sizeof(DSecond_t))) == NULL)
+			if ((pSignalStatusPackage->duration = static_cast<DSecond_t *>(std::calloc(1, sizeof(DSecond_t)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << ".duration" << std::endl;
 				has_error = true;
@@ -1727,7 +1331,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 			*(pSignalStatusPackage->duration) = signalRequetStatus.duration;
 		}
 		// SignalRequesterInfo
-		if ((pSignalStatusPackage->requester = (SignalRequesterInfo_t *)calloc(1, sizeof(SignalRequesterInfo_t))) == NULL)
+		if ((pSignalStatusPackage->requester = static_cast<SignalRequesterInfo_t *>(std::calloc(1, sizeof(SignalRequesterInfo_t)))) == NULL)
 		{
 			std::cerr << prog_name << "failed allocate " << allocate_level << ".SignalRequesterInfo" << std::endl;
 			has_error = true;
@@ -1743,7 +1347,6 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		//	BasicVehicleRole                    OPTIONAL
 		//	RequestorType                       EXCL
 		// -------------------------------------------------------- //
-
 		// VehicleID - TemporaryID
 		pSignalRequesterInfo->id.present = VehicleID_PR_entityID;
 		if (!id2temporaryId(&(pSignalRequesterInfo->id.choice.entityID.buf), pSignalRequesterInfo->id.choice.entityID.size, signalRequetStatus.vehId))
@@ -1759,7 +1362,7 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 		// BasicVehicleRole
 		if (signalRequetStatus.vehRole != MsgEnum::basicRole::unavailable)
 		{
-			if ((pSignalRequesterInfo->role = (BasicVehicleRole_t *)calloc(1, sizeof(BasicVehicleRole_t))) == NULL)
+			if ((pSignalRequesterInfo->role = static_cast<BasicVehicleRole_t *>(std::calloc(1, sizeof(BasicVehicleRole_t)))) == NULL)
 			{
 				std::cerr << prog_name << "failed allocate " << allocate_level << ".SignalRequesterInfo.BasicVehicleRole" << std::endl;
 				has_error = true;
@@ -1771,15 +1374,27 @@ auto ssm2msgFrame = [](const SSM_element_t& ssmIn, SignalStatusMessage_t& ssm)
 	return(!has_error);
 };
 
-/// convert MapData_t, which specifies speed limit at lane/node level, to MapData_element_t
-auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& mapDataOut)->bool
+/// convert MapData_t to MapData_element_t
+auto msgFrame2mapData = [](const MapData_t& mapData, MapData_element_t& mapDataOut)->bool
 {
-	std::string prog_name{"msgFrame2mapData_single: "};
+	std::string prog_name{"msgFrame2mapData: "};
+	if ((mapData.layerType == NULL) || (*(mapData.layerType) != LayerType_intersectionData))
+	{
+		std::cerr << prog_name << "missing layerType intersectionData" << std::endl;
+		return(false);
+	}
+	if ((mapData.intersections == NULL) || (mapData.intersections->list.array == NULL) || (mapData.intersections->list.array[0] == NULL))
+	{
+		std::cerr << prog_name << "missing IntersectionGeometryList" << std::endl;
+		return(false);
+	}
 	const IntersectionGeometry_t* pIntersectionGeometry = mapData.intersections->list.array[0];
 	mapDataOut.id = static_cast<uint16_t>(pIntersectionGeometry->id.id);
 	mapDataOut.regionalId = (pIntersectionGeometry->id.region != NULL) ? static_cast<uint16_t>(*(pIntersectionGeometry->id.region)) : 0;
 	mapDataOut.mapVersion = static_cast<uint8_t>(mapData.msgIssueRevision);
 	mapDataOut.mpApproaches.resize(15);  // maximum approaches
+	for (size_t i = 0; i < 15; i++)
+		mapDataOut.mpApproaches[i].id = 0;
 	mapDataOut.attributes.set(1);        // Geometric data is included
 	const auto& position3D = pIntersectionGeometry->refPoint;
 	mapDataOut.geoRef.latitude = static_cast<int32_t>(position3D.lat);
@@ -1800,23 +1415,32 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 	}
 	uint16_t refLaneWidth = static_cast<uint16_t>(*(pIntersectionGeometry->laneWidth));
 	// SpeedLimitList
-	uint16_t refSpeedLimt = ((pIntersectionGeometry->speedLimits != NULL)
-		&& (pIntersectionGeometry->speedLimits->list.array != NULL)
-		&& (pIntersectionGeometry->speedLimits->list.array[0] != NULL)
-		&& (pIntersectionGeometry->speedLimits->list.array[0]->type == SpeedLimitType_vehicleMaxSpeed)) ?
-		static_cast<uint16_t>(pIntersectionGeometry->speedLimits->list.array[0]->speed) : MsgEnum::unknown_speed;
+	if ((pIntersectionGeometry->speedLimits == NULL)
+		|| (pIntersectionGeometry->speedLimits->list.array == NULL)
+		|| (pIntersectionGeometry->speedLimits->list.array[0] == NULL)
+		|| (pIntersectionGeometry->speedLimits->list.array[0]->type != SpeedLimitType_vehicleMaxSpeed))
+	{
+		std::cerr << prog_name << "missing SpeedLimitList vehicleMaxSpeed" << std::endl;
+		mapDataOut.reset();
+		return(false);
+	}
+	uint16_t refSpeedLimt = static_cast<uint16_t>(pIntersectionGeometry->speedLimits->list.array[0]->speed);
+	mapDataOut.attributes.set(2);   // Speed limit data is included
 	// LaneList
-	if (pIntersectionGeometry->laneSet.list.count == 0)
+	if ((pIntersectionGeometry->laneSet.list.array == NULL) || (pIntersectionGeometry->laneSet.list.count == 0))
 	{
 		std::cerr << prog_name << "missing LaneList" << std::endl;
 		mapDataOut.reset();
 		return(false);
 	}
 	// loop through lanes
+	std::vector< std::pair<size_t, size_t> > computedLanes;
 	bool has_error = false;
 	for (int j = 0; j < pIntersectionGeometry->laneSet.list.count; j++)
 	{
 		const GenericLane_t* pGenericLane = pIntersectionGeometry->laneSet.list.array[j];
+		if (pGenericLane == NULL)
+			continue;
 		const auto& laneDirection = pGenericLane->laneAttributes.directionalUse;
 		uint8_t directionalUse = static_cast<uint8_t>(bitString2ul(laneDirection.buf, laneDirection.size, laneDirection.bits_unused));
 		if ((directionalUse < 0x01) || (directionalUse > 0x03))
@@ -1828,31 +1452,28 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 			has_error = true;
 			break;
 		}
-		if ((pGenericLane->ingressApproach == NULL) && (pGenericLane->egressApproach == NULL))
+		if ((directionalUse != 0x03) && (pGenericLane->ingressApproach == NULL) && (pGenericLane->egressApproach == NULL))
 		{
 			std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing ApproachID" << std::endl;
 			has_error = true;
 			break;
 		}
-		if ((directionalUse == 0x01)  // inbound traffic lane
-			&& ((pGenericLane->connectsTo == NULL) || (pGenericLane->connectsTo->list.count == 0)
-				|| (pGenericLane->connectsTo->list.array[0]->signalGroup == NULL)))
-		{ // required to provide signal phase that controls the movement
-			std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing ConnectsTo" << std::endl;
-			has_error = true;
-			break;
-		}
-		if ((pGenericLane->nodeList.present != NodeListXY_PR_nodes)
-			|| (pGenericLane->nodeList.choice.nodes.list.array == NULL)
-			|| (pGenericLane->nodeList.choice.nodes.list.count < 2)
-			|| (pGenericLane->nodeList.choice.nodes.list.count > 63))
+		// a lane path can be made of two or more nodes or computed by translating the data defined by a reference lane
+		if ((pGenericLane->nodeList.present == NodeListXY_PR_NOTHING)
+			|| ((pGenericLane->nodeList.present == NodeListXY_PR_nodes)
+				&& ((pGenericLane->nodeList.choice.nodes.list.array == NULL)
+				|| (pGenericLane->nodeList.choice.nodes.list.count < 2)
+				|| (pGenericLane->nodeList.choice.nodes.list.count > 63)))
+			|| ((pGenericLane->nodeList.present == NodeListXY_PR_computed)
+				&& ((pGenericLane->nodeList.choice.computed.offsetXaxis.present == ComputedLane__offsetXaxis_PR_NOTHING)
+				|| (pGenericLane->nodeList.choice.computed.offsetYaxis.present == ComputedLane__offsetYaxis_PR_NOTHING))))
 		{
 			std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing NodeListXY" << std::endl;
 			has_error = true;
 			break;
 		}
-		uint8_t approachId = static_cast<uint8_t>((pGenericLane->ingressApproach != NULL) ?
-			(*(pGenericLane->ingressApproach)) : (*(pGenericLane->egressApproach)));
+		uint8_t approachId = static_cast<uint8_t>(((pGenericLane->ingressApproach == NULL) && (pGenericLane->egressApproach == NULL)) ?
+			15 : ((pGenericLane->ingressApproach != NULL) ? (*(pGenericLane->ingressApproach)) : (*(pGenericLane->egressApproach))));
 		if ((approachId == 0) || (approachId > 15))
 		{
 			std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", out-of-bound approachId ";
@@ -1860,7 +1481,7 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 			has_error = true;
 			break;
 		}
-		auto& appStruct = mapDataOut.mpApproaches[approachId-1];
+		auto& appStruct = mapDataOut.mpApproaches[approachId - 1];
 		if (appStruct.id != approachId)
 		{ // assign ApproachStruct variables
 			appStruct.id = approachId;
@@ -1881,7 +1502,7 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 		// assign LaneStruct variables
 		lane_element_t laneStruct;
 		laneStruct.id = static_cast<uint8_t>(pGenericLane->laneID);
-		laneStruct.type = (directionalUse == 0x03) ? (MsgEnum::laneType::crosswalk) : (MsgEnum::laneType::traffic);
+		laneStruct.type = (appStruct.type == MsgEnum::approachType::crosswalk) ? (MsgEnum::laneType::crosswalk) : (MsgEnum::laneType::traffic);
 		const auto& laneType = pGenericLane->laneAttributes.laneType;
 		unsigned long laneTypeAttrib = (laneType.present == LaneTypeAttributes_PR_crosswalk)
 			? bitString2ul(laneType.choice.crosswalk.buf, laneType.choice.crosswalk.size, laneType.choice.crosswalk.bits_unused)
@@ -1895,415 +1516,193 @@ auto msgFrame2mapData_single = [](const MapData_t& mapData, MapData_element_t& m
 				allowedManeuvers = bitString2ul(pGenericLane->maneuvers->buf, pGenericLane->maneuvers->size, pGenericLane->maneuvers->bits_unused);
 		}
 		laneStruct.attributes = std::bitset<20>(allowedManeuvers << 8 | laneTypeAttrib);
-		laneStruct.controlPhase = ((pGenericLane->connectsTo == NULL) || (pGenericLane->connectsTo->list.count == 0)
-			|| (pGenericLane->connectsTo->list.array[0]->signalGroup == NULL)) ? 0
-			: static_cast<uint8_t>(*(pGenericLane->connectsTo->list.array[0]->signalGroup));
 		// loop through connecting lanes
-		if ((pGenericLane->connectsTo != NULL) && (pGenericLane->connectsTo->list.count > 0))
+		uint8_t controlPhase = 0;
+		if ((pGenericLane->connectsTo != NULL) && (pGenericLane->connectsTo->list.array != NULL) && (pGenericLane->connectsTo->list.count > 0))
 		{
 			laneStruct.mpConnectTo.resize(pGenericLane->connectsTo->list.count);
+			int connCnt = 0;
 			for (int k = 0; k < pGenericLane->connectsTo->list.count; k++)
 			{ // assign ConnectStruct variables
 				const Connection_t* pConnection = pGenericLane->connectsTo->list.array[k];
+				if (pConnection == NULL)
+					continue;
 				const auto& connectingLane = pConnection->connectingLane;
-				laneStruct.mpConnectTo[k].intersectionId = (pConnection->remoteIntersection == NULL) ?
+				conn_element_t& connStruct = laneStruct.mpConnectTo[connCnt++];
+				connStruct.intersectionId = (pConnection->remoteIntersection == NULL) ?
 					mapDataOut.id : static_cast<uint16_t>(pConnection->remoteIntersection->id);
-				laneStruct.mpConnectTo[k].regionalId = ((pConnection->remoteIntersection == NULL) || (pConnection->remoteIntersection->region == NULL)) ?
+				connStruct.regionalId = ((pConnection->remoteIntersection == NULL) || (pConnection->remoteIntersection->region == NULL)) ?
 					mapDataOut.regionalId : static_cast<uint16_t>(*(pConnection->remoteIntersection->region));
-				laneStruct.mpConnectTo[k].laneId = static_cast<uint8_t>(connectingLane.lane);
+				if ((pConnection->signalGroup != NULL) && (controlPhase == 0))
+					controlPhase = static_cast<uint8_t>(*(pConnection->signalGroup));
+				connStruct.laneId = static_cast<uint8_t>(connectingLane.lane);
 				unsigned long connecting_maneuvers = (connectingLane.maneuver == NULL) ? 0 :
 					bitString2ul(connectingLane.maneuver->buf, connectingLane.maneuver->size, connectingLane.maneuver->bits_unused);
 				switch(connecting_maneuvers)
 				{
 				case 0x00:
-					laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::unavailable;
+					connStruct.laneManeuver = MsgEnum::maneuverType::unavailable;
 					break;
 				case 0x01:
-					laneStruct.mpConnectTo[k].laneManeuver = (directionalUse == 0x01) ?
-						(MsgEnum::maneuverType::straightAhead) : (MsgEnum::maneuverType::straight);
+					connStruct.laneManeuver = MsgEnum::maneuverType::straightAhead;
 					break;
 				case 0x02:
-					laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::leftTurn;
+					connStruct.laneManeuver = MsgEnum::maneuverType::leftTurn;
 					break;
 				case 0x04:
-					laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::rightTurn;
+					connStruct.laneManeuver = MsgEnum::maneuverType::rightTurn;
 					break;
 				case 0x08:
-					laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::uTurn;
+					connStruct.laneManeuver = MsgEnum::maneuverType::uTurn;
 					break;
 				}
 			}
+			if (connCnt != pGenericLane->connectsTo->list.count)
+				laneStruct.mpConnectTo.resize(connCnt);
 		}
-		// loop through lane nodes
-		laneStruct.mpNodes.resize(pGenericLane->nodeList.choice.nodes.list.count);
-		int nodeCnt = 0;
-		for (int k = 0; k < pGenericLane->nodeList.choice.nodes.list.count; k++)
-		{
-			const NodeXY_t* pNode = pGenericLane->nodeList.choice.nodes.list.array[k];
-			int32_t& offset_x = laneStruct.mpNodes[nodeCnt].offset_x;
-			int32_t& offset_y = laneStruct.mpNodes[nodeCnt].offset_y;
-			int32_t& latitude = laneStruct.mpNodes[nodeCnt].latitude;
-			int32_t& longitude = laneStruct.mpNodes[nodeCnt].longitude;
-			switch(pNode->delta.present)
-			{
-			case NodeOffsetPointXY_PR_node_XY1:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY1.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY1.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_XY2:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY2.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY2.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_XY3:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY3.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY3.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_XY4:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY4.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY4.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_XY5:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY5.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY5.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_XY6:
-				offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY6.x);
-				offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY6.y);
-				laneStruct.mpNodes[nodeCnt].useXY = true;
-				break;
-			case NodeOffsetPointXY_PR_node_LatLon:
-				latitude  = static_cast<int32_t>(pNode->delta.choice.node_LatLon.lat);
-				longitude = static_cast<int32_t>(pNode->delta.choice.node_LatLon.lon);
-				laneStruct.mpNodes[nodeCnt].useXY = false;
-				break;
-			default:
-				continue;
-				break;
-			}
-			if ((k == 0) && (pNode->attributes != NULL))
-			{
-				if (pNode->attributes->dWidth != NULL)
-					refLaneWidth = static_cast<uint16_t>(refLaneWidth + *(pNode->attributes->dWidth));
-				if ((directionalUse != 0x03) && (pNode->attributes->data != NULL) && (pNode->attributes->data->list.array != NULL)
-					&& (pNode->attributes->data->list.array[0] != NULL)
-					&& (pNode->attributes->data->list.array[0]->present == LaneDataAttribute_PR_speedLimits)
-					&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array != NULL)
-					&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0] != NULL)
-					&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->type == SpeedLimitType_vehicleMaxSpeed))
-				{
-					refSpeedLimt = static_cast<uint16_t>(pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->speed);
-				}
-			}
-			nodeCnt++;
+		laneStruct.controlPhase = controlPhase;
+		laneStruct.isComputedLane = (pGenericLane->nodeList.present == NodeListXY_PR_computed);
+		laneStruct.mpComputedLane.reset();
+		if (laneStruct.isComputedLane)
+		{ // ComputedLane
+			const ComputedLane_t& computed = pGenericLane->nodeList.choice.computed;
+			computed_lane_element_t& computedStruct = laneStruct.mpComputedLane;
+			computedStruct.refLaneId = static_cast<uint8_t>(computed.referenceLaneId);
+			computedStruct.offset_x = static_cast<int32_t>((computed.offsetXaxis.present == ComputedLane__offsetXaxis_PR_small) ?
+				computed.offsetXaxis.choice.small : computed.offsetXaxis.choice.large);
+			computedStruct.offset_y = static_cast<int32_t>((computed.offsetYaxis.present == ComputedLane__offsetYaxis_PR_small) ?
+				computed.offsetYaxis.choice.small : computed.offsetYaxis.choice.large);
+			if (computed.rotateXY != NULL)
+				computedStruct.rotateXY = static_cast<uint16_t>(*(computed.rotateXY));
+			if (computed.scaleXaxis != NULL)
+				computedStruct.scale_x = static_cast<int16_t>(*(computed.scaleXaxis));
+			if (computed.scaleYaxis != NULL)
+				computedStruct.scale_y = static_cast<int16_t>(*(computed.scaleYaxis));
+			computedLanes.push_back(std::make_pair((size_t)(approachId - 1), appStruct.mpLanes.size()));
 		}
-		laneStruct.width = refLaneWidth;
-		if ((directionalUse != 0x03) && (appStruct.speed_limit != refSpeedLimt))
-			appStruct.speed_limit = refSpeedLimt;
-		if (std::find(mapDataOut.speeds.begin(), mapDataOut.speeds.end(),	appStruct.speed_limit) == mapDataOut.speeds.end())
-			mapDataOut.speeds.push_back(appStruct.speed_limit);
-		if (nodeCnt != pGenericLane->nodeList.choice.nodes.list.count)
-			laneStruct.mpNodes.resize(nodeCnt);
-		appStruct.mpLanes.push_back(laneStruct);
-	}
-	if (std::count_if(mapDataOut.speeds.begin(), mapDataOut.speeds.end(),
-		[](const uint16_t& item){return((item > 0) && (item < MsgEnum::unknown_speed));}) == 0)
-	{
-		std::cerr << prog_name << "missing speedLimit" << std::endl;
-		has_error = true;
-	}
-	else
-		mapDataOut.attributes.set(2);
-	if (has_error)
-		mapDataOut.reset();
-	return(!has_error);
-};
-
-/// convert MapData_t, which specifies speed limit at the approach level, to MapData_element_t
-auto msgFrame2mapData_multi = [](const MapData_t& mapData, MapData_element_t& mapDataOut)->bool
-{
-	std::string prog_name{"msgFrame2mapData_multi: "};
-	mapDataOut.id = static_cast<uint16_t>(mapData.intersections->list.array[0]->id.id);
-	if (mapData.intersections->list.array[0]->id.region != NULL)
-		mapDataOut.regionalId = static_cast<uint16_t>(*(mapData.intersections->list.array[0]->id.region));
-	mapDataOut.mapVersion = static_cast<uint8_t>(mapData.msgIssueRevision);
-	mapDataOut.mpApproaches.resize(15);  // maximum approaches
-	mapDataOut.attributes.set(1);        // Geometric data is included
-	const auto& position3D = mapData.intersections->list.array[0]->refPoint;
-	mapDataOut.geoRef.latitude = static_cast<int32_t>(position3D.lat);
-	mapDataOut.geoRef.longitude = static_cast<int32_t>(position3D.Long);
-	if ((position3D.elevation != NULL) && (*(position3D.elevation) != (DSRC_Elevation_t)MsgEnum::unknown_elevation))
-	{ // Elevation data is included
-		mapDataOut.attributes.set(0);
-		mapDataOut.geoRef.elevation = static_cast<int32_t>(*(position3D.elevation));
-	}
-	else
-		mapDataOut.geoRef.elevation = 0;
-	// loop through speed groups
-	bool has_error = false;
-	for (int i = 0; i < mapData.intersections->list.count; i++)
-	{
-		const IntersectionGeometry_t* pIntersectionGeometry = mapData.intersections->list.array[i];
-		if (static_cast<uint16_t>(pIntersectionGeometry->id.id) != mapDataOut.id)
-		{
-			std::cerr << prog_name << "containing multiples IntersectionReferenceID" << std::endl;
-			has_error = true;
-			break;
-		}
-		if (pIntersectionGeometry->laneWidth == NULL)
-		{
-			std::cerr << prog_name << "missing LaneWidth" << std::endl;
-			has_error = true;
-			break;
-		}
-		uint16_t refLaneWidth = static_cast<uint16_t>(*(pIntersectionGeometry->laneWidth));
-		if (pIntersectionGeometry->laneSet.list.count == 0)
-		{
-			std::cerr << prog_name << "missing LaneList" << std::endl;
-			has_error = true;
-			break;
-		}
-		// speed limit for this speed group
-		const auto& firstLaneDirection = pIntersectionGeometry->laneSet.list.array[0]->laneAttributes.directionalUse;
-		uint8_t  laneDirectionalUse = static_cast<uint8_t>(bitString2ul(firstLaneDirection.buf, firstLaneDirection.size, firstLaneDirection.bits_unused));
-		if ((laneDirectionalUse < 0x01) || (laneDirectionalUse > 0x03))
-		{
-			std::cerr << prog_name << "unknown laneDirectionalUse=" << static_cast<unsigned int>(laneDirectionalUse);
-			std::cerr << ", bitString size=" << firstLaneDirection.size;
-			std::cerr << ", bits_unused=" << firstLaneDirection.bits_unused << std::endl;
-			has_error = true;
-			break;
-		}
-		uint16_t speed_limit = (laneDirectionalUse == 0x03) ? 0 : MsgEnum::unknown_speed;
-		// check whether or not the speed limit is set for vehicular traffic lanes
-		if ((laneDirectionalUse != 0x03) && (pIntersectionGeometry->speedLimits != NULL))
-		{ // loop through speedLimits to find SpeedLimitType_vehicleMaxSpeed entry
-			for (int j = 0; j < pIntersectionGeometry->speedLimits->list.count; j++)
-			{
-				const RegulatorySpeedLimit_t* pRegulatorySpeedLimit = pIntersectionGeometry->speedLimits->list.array[j];
-				if ((pRegulatorySpeedLimit->type == SpeedLimitType_vehicleMaxSpeed)
-					&& (pRegulatorySpeedLimit->speed != (Velocity_t)MsgEnum::unknown_speed))
-				{ // speed limit data is included
-					speed_limit = static_cast<uint16_t>(pRegulatorySpeedLimit->speed);
-					break;
-				}
-			}
-		}
-		// loop through lanes
-		for (int j = 0; j < pIntersectionGeometry->laneSet.list.count; j++)
-		{
-			const GenericLane_t* pGenericLane = pIntersectionGeometry->laneSet.list.array[j];
-			const auto& laneDirection = pGenericLane->laneAttributes.directionalUse;
-			uint8_t directionalUse = static_cast<uint8_t>(bitString2ul(laneDirection.buf, laneDirection.size, laneDirection.bits_unused));
-			if ((directionalUse < 0x01) || (directionalUse > 0x03))
-			{
-				std::cerr << prog_name << "laneId=" << pGenericLane->laneID;
-				std::cerr << ", unknown directionalUse=" << static_cast<unsigned int>(directionalUse);
-				std::cerr << ", bitString size=" << laneDirection.size;
-				std::cerr << ", bits_unused=" << laneDirection.bits_unused << std::endl;
-				has_error = true;
-				break;
-			}
-			if ((pGenericLane->ingressApproach == NULL) && (pGenericLane->egressApproach == NULL))
-			{
-				std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing ApproachID" << std::endl;
-				has_error = true;
-				break;
-			}
-			if ((directionalUse == 0x01)  // inbound traffic lane
-				&& ((pGenericLane->connectsTo == NULL) || (pGenericLane->connectsTo->list.count == 0)
-					|| (pGenericLane->connectsTo->list.array[0]->signalGroup == NULL)))
-			{ // required to provide signal phase that controls the movement
-				std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing ConnectsTo" << std::endl;
-				has_error = true;
-				break;
-			}
-			if ((pGenericLane->nodeList.present != NodeListXY_PR_nodes)
-				|| (pGenericLane->nodeList.choice.nodes.list.array == NULL)
-				|| (pGenericLane->nodeList.choice.nodes.list.count < 2)
-				|| (pGenericLane->nodeList.choice.nodes.list.count > 63))
-			{
-				std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing NodeListXY" << std::endl;
-				has_error = true;
-				break;
-			}
-			uint8_t approachId = static_cast<uint8_t>((pGenericLane->ingressApproach != NULL) ?
-				(*(pGenericLane->ingressApproach)) : (*(pGenericLane->egressApproach)));
-			if ((approachId > 0) && (approachId <= 15) && (mapDataOut.mpApproaches[approachId-1].id != approachId))
-			{ // assign ApproachStruct variables
-				mapDataOut.mpApproaches[approachId-1].id = approachId;
-				mapDataOut.mpApproaches[approachId-1].speed_limit = speed_limit;
-				if (std::find(mapDataOut.speeds.begin(), mapDataOut.speeds.end(),	speed_limit) == mapDataOut.speeds.end())
-					mapDataOut.speeds.push_back(speed_limit);
-				switch(directionalUse)
-				{
-				case 0x01:
-					mapDataOut.mpApproaches[approachId-1].type = MsgEnum::approachType::inbound;
-					break;
-				case 0x02:
-					mapDataOut.mpApproaches[approachId-1].type = MsgEnum::approachType::outbound;
-					break;
-				case 0x03:
-					mapDataOut.mpApproaches[approachId-1].type = MsgEnum::approachType::crosswalk;
-					break;
-				}
-			}
-			// assign LaneStruct variables
-			lane_element_t laneStruct;
-			laneStruct.id = static_cast<uint8_t>(pGenericLane->laneID);
-			laneStruct.type = (directionalUse == 0x03) ? (MsgEnum::laneType::crosswalk) : (MsgEnum::laneType::traffic);
-			const auto& laneType = pGenericLane->laneAttributes.laneType;
-			unsigned long laneTypeAttrib = (laneType.present == LaneTypeAttributes_PR_crosswalk)
-				? bitString2ul(laneType.choice.crosswalk.buf, laneType.choice.crosswalk.size, laneType.choice.crosswalk.bits_unused)
-				: bitString2ul(laneType.choice.vehicle.buf, laneType.choice.vehicle.size, laneType.choice.vehicle.bits_unused);
-			unsigned long allowedManeuvers = 0;
-			if (directionalUse != 0x03)
-			{ // not crosswalk
-				if (pGenericLane->maneuvers == NULL)
-					std::cerr << prog_name << "laneId=" << pGenericLane->laneID << ", missing AllowedManeuvers" << std::endl;
-				else
-					allowedManeuvers = bitString2ul(pGenericLane->maneuvers->buf, pGenericLane->maneuvers->size, pGenericLane->maneuvers->bits_unused);
-			}
-			laneStruct.attributes = std::bitset<20>(allowedManeuvers << 8 | laneTypeAttrib);
-			const NodeXY_t* pFirstNode = pGenericLane->nodeList.choice.nodes.list.array[0];
-			laneStruct.width = ((pFirstNode->attributes != NULL) && (pFirstNode->attributes->dWidth != NULL))
-				? (uint16_t)(refLaneWidth + *(pFirstNode->attributes->dWidth)) : refLaneWidth;
-			laneStruct.controlPhase = ((pGenericLane->connectsTo == NULL) || (pGenericLane->connectsTo->list.count == 0)
-				|| (pGenericLane->connectsTo->list.array[0]->signalGroup == NULL)) ? 0
-				: static_cast<uint8_t>(*(pGenericLane->connectsTo->list.array[0]->signalGroup));
-			// loop through connecting lanes
-			if (pGenericLane->connectsTo != NULL)
-			{
-				laneStruct.mpConnectTo.resize(pGenericLane->connectsTo->list.count);
-				for (int k = 0; k < pGenericLane->connectsTo->list.count; k++)
-				{ // assign ConnectStruct variables
-					const Connection_t* pConnection = pGenericLane->connectsTo->list.array[k];
-					const auto& connectingLane = pConnection->connectingLane;
-					laneStruct.mpConnectTo[k].intersectionId = (pConnection->remoteIntersection == NULL) ?
-						mapDataOut.id : static_cast<uint16_t>(pConnection->remoteIntersection->id);
-					laneStruct.mpConnectTo[k].regionalId = ((pConnection->remoteIntersection == NULL) || (pConnection->remoteIntersection->region == NULL)) ?
-						mapDataOut.regionalId : static_cast<uint16_t>(*(pConnection->remoteIntersection->region));
-					laneStruct.mpConnectTo[k].laneId = static_cast<uint8_t>(connectingLane.lane);
-					unsigned long connecting_maneuvers = (connectingLane.maneuver == NULL) ? 0 :
-						bitString2ul(connectingLane.maneuver->buf, connectingLane.maneuver->size, connectingLane.maneuver->bits_unused);
-					switch(connecting_maneuvers)
-					{
-					case 0x00:
-						laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::unavailable;
-						break;
-					case 0x01:
-						laneStruct.mpConnectTo[k].laneManeuver = (directionalUse == 0x01) ?
-							(MsgEnum::maneuverType::straightAhead) : (MsgEnum::maneuverType::straight);
-						break;
-					case 0x02:
-						laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::leftTurn;
-						break;
-					case 0x04:
-						laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::rightTurn;
-						break;
-					case 0x08:
-						laneStruct.mpConnectTo[k].laneManeuver = MsgEnum::maneuverType::uTurn;
-						break;
-					}
-				}
-			}
-			// loop through lane nodes
+		else
+		{ // loop through lane nodes
 			laneStruct.mpNodes.resize(pGenericLane->nodeList.choice.nodes.list.count);
 			int nodeCnt = 0;
 			for (int k = 0; k < pGenericLane->nodeList.choice.nodes.list.count; k++)
 			{
 				const NodeXY_t* pNode = pGenericLane->nodeList.choice.nodes.list.array[k];
-				int32_t& offset_x = laneStruct.mpNodes[nodeCnt].offset_x;
-				int32_t& offset_y = laneStruct.mpNodes[nodeCnt].offset_y;
-				int32_t& latitude = laneStruct.mpNodes[nodeCnt].latitude;
-				int32_t& longitude = laneStruct.mpNodes[nodeCnt].longitude;
-				switch(pNode->delta.present)
+				if (pNode == NULL)
+					continue;
+				const NodeOffsetPointXY_t& delta = pNode->delta;
+				node_element_t& nodeStruct = laneStruct.mpNodes[nodeCnt++];
+				switch(delta.present)
 				{
 				case NodeOffsetPointXY_PR_node_XY1:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY1.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY1.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY1.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY1.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_XY2:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY2.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY2.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY2.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY2.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_XY3:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY3.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY3.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY3.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY3.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_XY4:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY4.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY4.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY4.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY4.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_XY5:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY5.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY5.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY5.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY5.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_XY6:
-					offset_x = static_cast<int32_t>(pNode->delta.choice.node_XY6.x);
-					offset_y = static_cast<int32_t>(pNode->delta.choice.node_XY6.y);
-					laneStruct.mpNodes[nodeCnt].useXY = true;
+					nodeStruct.offset_x = static_cast<int32_t>(delta.choice.node_XY6.x);
+					nodeStruct.offset_y = static_cast<int32_t>(delta.choice.node_XY6.y);
+					nodeStruct.useXY = true;
 					break;
 				case NodeOffsetPointXY_PR_node_LatLon:
-					latitude  = static_cast<int32_t>(pNode->delta.choice.node_LatLon.lat);
-					longitude = static_cast<int32_t>(pNode->delta.choice.node_LatLon.lon);
-					laneStruct.mpNodes[nodeCnt].useXY = false;
+					nodeStruct.latitude  = static_cast<int32_t>(delta.choice.node_LatLon.lat);
+					nodeStruct.longitude = static_cast<int32_t>(delta.choice.node_LatLon.lon);
+					nodeStruct.useXY = false;
 					break;
 				default:
+					nodeCnt--;
 					continue;
 					break;
 				}
-				nodeCnt++;
+				if ((k == 0) && (pNode->attributes != NULL))
+				{
+					if (pNode->attributes->dWidth != NULL)
+						refLaneWidth = static_cast<uint16_t>(refLaneWidth + *(pNode->attributes->dWidth));
+					if ((directionalUse != 0x03) && (pNode->attributes->data != NULL) && (pNode->attributes->data->list.array != NULL)
+						&& (pNode->attributes->data->list.array[0] != NULL)
+						&& (pNode->attributes->data->list.array[0]->present == LaneDataAttribute_PR_speedLimits)
+						&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array != NULL)
+						&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0] != NULL)
+						&& (pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->type == SpeedLimitType_vehicleMaxSpeed))
+					{
+						refSpeedLimt = static_cast<uint16_t>(pNode->attributes->data->list.array[0]->choice.speedLimits.list.array[0]->speed);
+					}
+				}
 			}
+			laneStruct.width = refLaneWidth;
+			if ((directionalUse != 0x03) && (appStruct.speed_limit != refSpeedLimt))
+				appStruct.speed_limit = refSpeedLimt;
 			if (nodeCnt != pGenericLane->nodeList.choice.nodes.list.count)
 				laneStruct.mpNodes.resize(nodeCnt);
-			mapDataOut.mpApproaches[approachId-1].mpLanes.push_back(laneStruct);
 		}
-		if (has_error)
-			break;
+		appStruct.mpLanes.push_back(laneStruct);
 	}
-	if (std::count_if(mapDataOut.speeds.begin(), mapDataOut.speeds.end(),
-		[](const uint16_t& item){return((item > 0) && (item < MsgEnum::unknown_speed));}) == 0)
-	{
-		std::cerr << prog_name << "missing speedLimit" << std::endl;
-		has_error = true;
+	if (!has_error && !computedLanes.empty())
+	{ // check the exsitence of the reference lane of computed lanes
+		// construction of the computed lane path will be done in MAP Engine
+		for (const auto& item : computedLanes)
+		{
+			auto& appStruct  = mapDataOut.mpApproaches[item.first];
+			auto& laneStruct = appStruct.mpLanes[item.second];
+			// find the reference lane
+			const auto& refLaneId = laneStruct.mpComputedLane.refLaneId;
+			auto it_ref = std::find_if(appStruct.mpLanes.begin(), appStruct.mpLanes.end(),
+				[&refLaneId](const lane_element_t& obj){return(obj.id == refLaneId);});
+			if (it_ref == appStruct.mpLanes.end())
+			{
+				std::cerr << prog_name << "reference laneId=" << static_cast<unsigned int>(refLaneId) << " for computed laneId=";
+				std::cerr	<< static_cast<unsigned int>(laneStruct.id) << ", on approach=" << static_cast<unsigned int>(appStruct.id);
+				std::cerr	<< " does not exist in mpApproaches" << std::endl;
+				has_error = true;
+				break;
+			}
+		}
 	}
-	else
-		mapDataOut.attributes.set(2);
 	if (has_error)
 		mapDataOut.reset();
-	return(!has_error);
-};
-
-/// convert MapData_t to MapData_element_t
-auto msgFrame2mapData = [](const MapData_t& mapData, MapData_element_t& mapDataOut)->bool
-{
-	if ((mapData.intersections == NULL) || (mapData.intersections->list.array == NULL)
-		|| (mapData.intersections->list.array[0] == NULL) || (mapData.intersections->list.count == 0))
-	{
-		std::cerr << "msgFrame2mapData: empty IntersectionGeometryList" << std::endl;
-		return(false);
+	else
+	{ // remove empty approach object
+		mapDataOut.mpApproaches.erase(std::remove_if(mapDataOut.mpApproaches.begin(), mapDataOut.mpApproaches.end(),
+			[](const approach_element_t& appObj){return(appObj.id == 0);}), mapDataOut.mpApproaches.end());
+		if (mapDataOut.mpApproaches.back().id == 15)
+		{	// assign approach Id for crosswalks which don't have approach Id specified
+			auto it = std::max_element(mapDataOut.mpApproaches.begin(), std::prev(mapDataOut.mpApproaches.end()),
+				[](const approach_element_t& ar, const approach_element_t& br){return(ar.id < br.id);});
+			mapDataOut.mpApproaches.back().id = static_cast<uint8_t>(it->id	 + 1);
+		}
+		// sort lanes within a approach in incresing lane Id
+		for (auto& appObj : mapDataOut.mpApproaches)
+			std::sort(appObj.mpLanes.begin(), appObj.mpLanes.end(), [](const lane_element_t& ar, const lane_element_t& br){return(ar.id < br.id);});
 	}
-	mapDataOut.isSingleFrame = (mapData.intersections->list.count == 1) ? true : false;
-	return((mapDataOut.isSingleFrame) ? msgFrame2mapData_single(mapData, mapDataOut) : msgFrame2mapData_multi(mapData, mapDataOut));
+	return(!has_error);
 };
 
 /// convert SPAT_t to SPAT_element_t
 auto msgFrame2spat = [](const SPAT_t& spat, SPAT_element_t& spatOut)->bool
 {
 	std::string prog_name{"msgFrame2spat: "};
-	if (spat.intersections.list.count == 0)
+	if ((spat.intersections.list.array == NULL) || (spat.intersections.list.array[0] == NULL))
 	{
-		std::cerr << prog_name << "empty IntersectionStateList" << std::endl;
+		std::cerr << prog_name << "missing IntersectionStateList" << std::endl;
 		return(false);
 	}
 	const IntersectionState_t* pIntsectionState = spat.intersections.list.array[0];
@@ -2316,9 +1715,9 @@ auto msgFrame2spat = [](const SPAT_t& spat, SPAT_element_t& spatOut)->bool
 	if (pIntsectionState->timeStamp != NULL)
 		spatOut.timeStampSec = static_cast<uint16_t>(*(pIntsectionState->timeStamp));
 	spatOut.status = std::bitset<16>(bitString2ul(pIntsectionState->status.buf, pIntsectionState->status.size, pIntsectionState->status.bits_unused));
-	if (pIntsectionState->states.list.count == 0)
+	if ((pIntsectionState->states.list.array == NULL) || (pIntsectionState->states.list.count == 0))
 	{
-		std::cerr << prog_name << "empty MovementList" << std::endl;
+		std::cerr << prog_name << "missing MovementList" << std::endl;
 		spatOut.reset();
 		return(false);
 	}
@@ -2328,18 +1727,19 @@ auto msgFrame2spat = [](const SPAT_t& spat, SPAT_element_t& spatOut)->bool
 	for (int i = 0; i < pIntsectionState->states.list.count; i++)
 	{
 		const MovementState_t* pMovementState = pIntsectionState->states.list.array[i];
-		if ((pMovementState->signalGroup < 1) || (pMovementState->signalGroup > 2 * 8))
+		if (pMovementState == NULL)
+			continue;
+		if ((pMovementState->signalGroup < 1) || (pMovementState->signalGroup > 16))
 		{
 			std::cerr << prog_name << "invalid SignalGroupID" << std::endl;
 			has_error = true;
 			break;
 		}
-		if (pMovementState->state_time_speed.list.count == 0)
+		if ((pMovementState->state_time_speed.list.array == NULL) || (pMovementState->state_time_speed.list.array[0] == NULL))
 			continue;
 		const MovementEvent_t* pMovementEvent = pMovementState->state_time_speed.list.array[0];
 		int j = static_cast<int>((pMovementState->signalGroup - 1) % 8);
-		PhaseState_element_t& phaseState = (pMovementState->signalGroup > 8) ?
-			spatOut.pedPhaseState[j] : spatOut.phaseState[j];
+		PhaseState_element_t& phaseState = (pMovementState->signalGroup > 8) ? spatOut.pedPhaseState[j] : spatOut.phaseState[j];
 		if (pMovementState->signalGroup > 8)
 			permittedPedPhases.set(j);
 		else
@@ -2363,9 +1763,9 @@ auto msgFrame2spat = [](const SPAT_t& spat, SPAT_element_t& spatOut)->bool
 auto msgFrame2rtcm = [](const RTCMcorrections_t& rtcm, RTCM_element_t& rtcmOut)->bool
 {
 	std::string prog_name{"msgFrame2rtcm: "};
-	if (rtcm.msgs.list.count == 0)
+	if ((rtcm.msgs.list.array == NULL) || (rtcm.msgs.list.array[0] == NULL))
 	{
-		std::cerr << prog_name << "empty RTCMmessageList" << std::endl;
+		std::cerr << prog_name << "missing RTCMmessageList" << std::endl;
 		return(false);
 	}
 	rtcmOut.msgCnt = static_cast<uint8_t>(rtcm.msgCnt);
@@ -2375,7 +1775,7 @@ auto msgFrame2rtcm = [](const RTCMcorrections_t& rtcm, RTCM_element_t& rtcmOut)-
 	const RTCMmessage_t* pRTCMmessage = rtcm.msgs.list.array[0];
 	if (pRTCMmessage->size == 0)
 	{
-		std::cerr << prog_name << "empty RTCMmessage" << std::endl;
+		std::cerr << prog_name << "missing RTCMmessage" << std::endl;
 		rtcmOut.reset();
 		return(false);
 	}
@@ -2387,7 +1787,7 @@ auto msgFrame2rtcm = [](const RTCMcorrections_t& rtcm, RTCM_element_t& rtcmOut)-
 auto msgFrame2srm = [](const SignalRequestMessage_t& srm, SRM_element_t& srmOut)->bool
 {
 	std::string prog_name{"msgFrame2srm: "};
-	if ((srm.requests == NULL) || (srm.requests->list.count == 0))
+	if ((srm.requests == NULL) || (srm.requests->list.array == NULL) || (srm.requests->list.array[0] == NULL))
 	{
 		std::cerr << prog_name << "missing SignalRequestList" << std::endl;
 		return(false);
@@ -2452,7 +1852,7 @@ auto msgFrame2srm = [](const SignalRequestMessage_t& srm, SRM_element_t& srmOut)
 	srmOut.latitude = static_cast<int32_t>(requestor.position->position.lat);
 	srmOut.longitude = static_cast<int32_t>(requestor.position->position.Long);
 	if (requestor.position->position.elevation != NULL)
-		srmOut.elevation =static_cast<int32_t>(*(requestor.position->position.elevation));
+		srmOut.elevation = static_cast<int32_t>(*(requestor.position->position.elevation));
 	if (requestor.position->heading == NULL)
 	{
 		std::cerr << prog_name << "missing heading" << std::endl;
@@ -2475,9 +1875,9 @@ auto msgFrame2srm = [](const SignalRequestMessage_t& srm, SRM_element_t& srmOut)
 auto msgFrame2ssm = [](const SignalStatusMessage_t& ssm, SSM_element_t& ssmOut)->bool
 {
 	std::string prog_name{"msgFrame2ssm: "};
-	if (ssm.status.list.count == 0)
+	if ((ssm.status.list.array == NULL) || (ssm.status.list.array[0] == NULL))
 	{
-		std::cerr << prog_name << "empty SignalStatusList" << std::endl;
+		std::cerr << prog_name << "missing SignalStatusList" << std::endl;
 		return(false);
 	}
 	ssmOut.timeStampSec = static_cast<uint16_t>(ssm.second);
@@ -2490,18 +1890,21 @@ auto msgFrame2ssm = [](const SignalStatusMessage_t& ssm, SSM_element_t& ssmOut)-
 	ssmOut.id = static_cast<uint16_t>(pSignalStatus->id.id);
 	if (pSignalStatus->id.region != NULL)
 		ssmOut.regionalId = static_cast<uint16_t>(*(pSignalStatus->id.region));
-	if (pSignalStatus->sigStatus.list.count == 0)
+	if ((pSignalStatus->sigStatus.list.array == NULL) || (pSignalStatus->sigStatus.list.count == 0))
 	{
-		std::cerr << prog_name << "empty SignalStatusPackageList" << std::endl;
+		std::cerr << prog_name << "missing SignalStatusPackageList" << std::endl;
 		ssmOut.reset();
 		return(false);
 	}
 	ssmOut.mpSignalRequetStatus.resize(pSignalStatus->sigStatus.list.count);
+	int statusCnt = 0;
 	bool has_error = false;
 	for (int i = 0; i < pSignalStatus->sigStatus.list.count; i++)
 	{
 		const SignalStatusPackage_t* pSignalStatusPackage = pSignalStatus->sigStatus.list.array[i];
-		SignalRequetStatus_t& signalRequetStatus = ssmOut.mpSignalRequetStatus[i];
+		if (pSignalStatusPackage == NULL)
+			continue;
+		SignalRequetStatus_t& signalRequetStatus = ssmOut.mpSignalRequetStatus[statusCnt++];
 		signalRequetStatus.reset();
 		signalRequetStatus.status = static_cast<MsgEnum::requestStatus>(pSignalStatusPackage->status);
 		if (pSignalStatusPackage->inboundOn.present == IntersectionAccessPoint_PR_approach)
@@ -2529,7 +1932,7 @@ auto msgFrame2ssm = [](const SignalStatusMessage_t& ssm, SSM_element_t& ssmOut)-
 		}
 		if (pSignalStatusPackage->requester->id.present != VehicleID_PR_entityID)
 		{
-			std::cerr << prog_name << "missing Temporary ID" << std::endl;
+			std::cerr << prog_name << "missing SignalRequesterInfo::TemporaryID" << std::endl;
 			has_error = true;
 			break;
 		}
@@ -2542,6 +1945,8 @@ auto msgFrame2ssm = [](const SignalStatusMessage_t& ssm, SSM_element_t& ssmOut)-
 	}
 	if (has_error)
 		ssmOut.reset();
+	if (statusCnt != pSignalStatus->sigStatus.list.count)
+		ssmOut.mpSignalRequetStatus.resize(statusCnt);
 	return(!has_error);
 };
 
@@ -2582,7 +1987,7 @@ auto msgFrame2bsm = [](const BasicSafetyMessage_t& bsm, BSM_element_t& bsmOut)->
 /// SAE J2735 UPER encoding function
 size_t AsnJ2735Lib::encode_msgFrame(const Frame_element_t& dsrcFrameIn, uint8_t* buf, size_t size)
 {
-	MessageFrame_t* pMessageFrame = (MessageFrame_t *)calloc(1, sizeof(MessageFrame_t));
+	MessageFrame_t* pMessageFrame = static_cast<MessageFrame_t *>(std::calloc(1, sizeof(MessageFrame_t)));
 	if (pMessageFrame == NULL)
 	{
 		std::cerr << "encode_msgFrame: failed allocate MessageFrame" << std::endl;
@@ -2598,9 +2003,7 @@ size_t AsnJ2735Lib::encode_msgFrame(const Frame_element_t& dsrcFrameIn, uint8_t*
 	{
 	case MsgEnum::DSRCmsgID_map:
 		pMessageFrame->value.present = MessageFrame__value_PR_MapData;
-		tf2msgFrame = (dsrcFrameIn.mapData.isSingleFrame)
-			? mapData2msgFrame_single(dsrcFrameIn.mapData, pMessageFrame->value.choice.MapData)
-			: mapData2msgFrame_multi(dsrcFrameIn.mapData, pMessageFrame->value.choice.MapData);
+		tf2msgFrame = mapData2msgFrame(dsrcFrameIn.mapData, pMessageFrame->value.choice.MapData);
 		break;
 	case MsgEnum::DSRCmsgID_spat:
 		pMessageFrame->value.present = MessageFrame__value_PR_SPAT;
@@ -2632,9 +2035,9 @@ size_t AsnJ2735Lib::encode_msgFrame(const Frame_element_t& dsrcFrameIn, uint8_t*
 		return(0);
 	}
 	pMessageFrame->messageId = dsrcFrameIn.dsrcMsgId;
-	asn_enc_rval_t rval = uper_encode_to_buffer(&asn_DEF_MessageFrame, 0, pMessageFrame, buf, size);
+	asn_enc_rval_t rval = asn_encode_to_buffer(NULL, ATS_UNALIGNED_BASIC_PER, &asn_DEF_MessageFrame, (void*)pMessageFrame, (void*)buf, size);
 	ASN_STRUCT_FREE(asn_DEF_MessageFrame, pMessageFrame);
-	return(numbits2numbytes(rval.encoded));
+	return((rval.encoded < 0) ? 0 : (size_t)rval.encoded);
 }
 
 /// SAE J2735 UPER decoding function
@@ -2642,7 +2045,7 @@ size_t AsnJ2735Lib::decode_msgFrame(const uint8_t* buf, size_t size, Frame_eleme
 {
 	dsrcFrameOut.reset();
 	MessageFrame_t* pMessageFrame = NULL;
-	asn_dec_rval_t rval = uper_decode(0, &asn_DEF_MessageFrame, (void **)&pMessageFrame, buf, size, 0, 0);
+	asn_dec_rval_t rval = asn_decode(NULL, ATS_UNALIGNED_BASIC_PER, &asn_DEF_MessageFrame, (void **)&pMessageFrame, buf, size);
 	if (rval.code != RC_OK)
 	{
 		std::cerr << "decode_msgFrame: failed UPER decoding" << std::endl;
@@ -2686,7 +2089,7 @@ size_t AsnJ2735Lib::decode_msgFrame(const uint8_t* buf, size_t size, Frame_eleme
 	if (tf2out)
 	{
 		dsrcFrameOut.dsrcMsgId = dsrcMsgId;
-		return(numbits2numbytes(rval.consumed));
+		return(rval.consumed);
 	}
 	return(0);
 }

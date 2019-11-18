@@ -15,7 +15,7 @@
  *
  * Input: .payload file
  * Output: decoded MAP payload in nmap format
- * 
+ *
  */
 
 #include <chrono>
@@ -40,7 +40,6 @@ void do_usage(const char* progname)
 	std::cerr << "Usage" << progname << std::endl;
 	std::cerr << "\t-f full path to intersection map file" << std::endl;
 	std::cerr << "\t-s intersection name" << std::endl;
-	std::cerr << "\t-i turn on encoding speed limit in lane" << std::endl;
 	std::cerr << "\t-? print this message" << std::endl;
 	exit(EXIT_FAILURE);
 }
@@ -50,17 +49,13 @@ int main(int argc, char** argv)
 	int option;
 	std::string fmap;
 	std::string intersectionName;
-	bool singleFrame = false;  /// TRUE to encode speed limit in lane, FALSE to encode in approach
 
-	while ((option = getopt(argc, argv, "f:s:i?")) != EOF)
+	while ((option = getopt(argc, argv, "f:s:?")) != EOF)
 	{
 		switch(option)
 		{
 		case 'f':
 			fmap = std::string(optarg);
-			break;
-		case 'i':
-				singleFrame = true;
 			break;
 		case 's':
 			intersectionName = std::string(optarg);
@@ -75,7 +70,7 @@ int main(int argc, char** argv)
 		do_usage(argv[0]);
 
 	/// instance class LocAware (Map Engine)
-	LocAware* plocAwareLib = new LocAware(fmap, singleFrame);
+	LocAware* plocAwareLib = new LocAware(fmap);
 	/// get intersection reference id
 	uint32_t referenceId = plocAwareLib->getIntersectionIdByName(intersectionName);
 	if (referenceId == 0)

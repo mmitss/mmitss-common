@@ -32,10 +32,9 @@ auto getFileExtension = [](const std::string& str)->std::string
 	return((found == std::string::npos) ? std::string("noExtension") : str.substr(found + 1));
 };
 
-LocAware::LocAware(const std::string& fname, bool isSingleFrame /*=false*/)
+LocAware::LocAware(const std::string& fname)
 {
 	saveNewMap2nmap = false;
-	speedLimitInLane = isSingleFrame;
 	mapFilePath = getFilePath(fname);
 	std::string fileExtension = getFileExtension(fname);
 	if ((fileExtension.compare("nmap") != 0) && (fileExtension.compare("payload") != 0))
@@ -104,7 +103,6 @@ auto isEmptyStr = [](const std::string& str)->bool
 
 auto setApproachType = [](const std::string& str, MsgEnum::approachType& type)->bool
 {
-	bool retn = true;
 	if (str.compare("inbound") == 0)
 		type = MsgEnum::approachType::inbound;
 	else if (str.compare("outbound") == 0)
@@ -112,8 +110,8 @@ auto setApproachType = [](const std::string& str, MsgEnum::approachType& type)->
 	else if (str.compare("crosswalk") == 0)
 		type = MsgEnum::approachType::crosswalk;
 	else
-		retn = false;
-	return(retn);
+		return(false);
+	return(true);
 };
 
 auto getApproachType = [](const MsgEnum::approachType& type)->std::string
@@ -131,14 +129,13 @@ auto getApproachType = [](const MsgEnum::approachType& type)->std::string
 
 auto setLaneType = [](const std::string& str, MsgEnum::laneType& type)->bool
 {
-	bool retn = true;
 	if (str.compare("traffic") == 0)
 		type = MsgEnum::laneType::traffic;
 	else if (str.compare("crosswalk") == 0)
 		type = MsgEnum::laneType::crosswalk;
 	else
-		retn = false;
-	return(retn);
+		return(false);
+	return(true);
 };
 
 auto getLaneType = [](const MsgEnum::laneType& type)->std::string
@@ -154,7 +151,6 @@ auto getLaneType = [](const MsgEnum::laneType& type)->std::string
 
 auto setManeuverType = [](const std::string& str, MsgEnum::maneuverType& type)->bool
 {
-	bool retn = true;
 	if (str.compare("uTurn") == 0)
 		type = MsgEnum::maneuverType::uTurn;
 	else if (str.compare("leftTurn") == 0)
@@ -164,11 +160,8 @@ auto setManeuverType = [](const std::string& str, MsgEnum::maneuverType& type)->
 	else if (str.compare("straightAhead") == 0)
 		type = MsgEnum::maneuverType::straightAhead;
 	else
-	{
 		type = MsgEnum::maneuverType::unavailable;
-		retn = false;
-	}
-	return(retn);
+	return(type != MsgEnum::maneuverType::unavailable);
 };
 
 auto getManeuverType = [](const MsgEnum::maneuverType& type)->std::string
@@ -182,7 +175,6 @@ auto getManeuverType = [](const MsgEnum::maneuverType& type)->std::string
 	case MsgEnum::maneuverType::rightTurn:
 		return(std::string("rightTurn"));
 	case MsgEnum::maneuverType::straightAhead:
-	case MsgEnum::maneuverType::straight:
 		return(std::string("straightAhead"));
 	default:
 		return(std::string("unavailable"));
@@ -203,7 +195,6 @@ auto setLaneManeuver = [](const MsgEnum::maneuverType& type, std::bitset<20>& at
 		attributes.set(11);
 		break;
 	case MsgEnum::maneuverType::straightAhead:
-	case MsgEnum::maneuverType::straight:
 		attributes.set(8);
 		break;
 	default:
@@ -213,7 +204,6 @@ auto setLaneManeuver = [](const MsgEnum::maneuverType& type, std::bitset<20>& at
 
 auto setLaneRestriction = [](const std::string& str, const MsgEnum::laneType& type, std::bitset<20>& attributes)->bool
 {
-	bool retn = true;
 	if (type == MsgEnum::laneType::traffic)
 	{
 		if (str.compare("isVehicleRevocableLane") == 0)
@@ -233,7 +223,7 @@ auto setLaneRestriction = [](const std::string& str, const MsgEnum::laneType& ty
 		else if (str.compare("permissionOnRequest") == 0)
 			attributes.set(7);
 		else
-			retn = false;
+			return(false);
 	}
 	else
 	{
@@ -256,9 +246,9 @@ auto setLaneRestriction = [](const std::string& str, const MsgEnum::laneType& ty
 		else if (str.compare("unsignalizedSegmentsPresent") == 0)
 			attributes.set(8);
 		else
-			retn = false;
+			return(false);
 	}
-	return(retn);
+	return(true);
 };
 
 auto getLaneRestriction = [](const MsgEnum::laneType& type, const std::bitset<20>& attributes)->std::vector<std::string>
@@ -309,7 +299,6 @@ auto getLaneRestriction = [](const MsgEnum::laneType& type, const std::bitset<20
 
 auto setLaneRule = [](const std::string& str, std::bitset<20>& attributes)->bool
 {
-	bool retn = true;
 	if (str.compare("leftTurnOnRedAllowed") == 0)
 		attributes.set(12);
 	else if (str.compare("rightTurnOnRedAllowed") == 0)
@@ -325,8 +314,8 @@ auto setLaneRule = [](const std::string& str, std::bitset<20>& attributes)->bool
 	else if (str.compare("caution") == 0)
 		attributes.set(18);
 	else
-		retn = false;
-	return(retn);
+		return(false);
+	return(true);
 };
 
 auto getLaneRule = [](const std::bitset<20>& attributes)->std::vector<std::string>
@@ -349,6 +338,36 @@ auto getLaneRule = [](const std::bitset<20>& attributes)->std::vector<std::strin
 	return(retn);
 };
 
+auto constructComputedLanes = [](NmapData::IntersectionStruct& intObj, const std::vector< std::pair<size_t, size_t> >& computedLanes)->void
+{ // assign mpNodes and width for computed lanes
+	for (const auto& item : computedLanes)
+	{
+		GeoUtils::point2D_t refPtNode;
+		// get computed lane object
+		auto& appObj  = intObj.mpApproaches[item.first];
+		auto& laneObj = appObj.mpLanes[item.second];
+		// find the reference lane
+		const auto& refLaneId = laneObj.mpComputed.refLaneId;
+		auto it_ref = std::find_if(appObj.mpLanes.begin(), appObj.mpLanes.end(),
+			[&refLaneId](const NmapData::LaneStruct& obj){return(obj.id == refLaneId);});
+		laneObj.width = it_ref->width;
+		laneObj.numpoints = it_ref->numpoints;
+		laneObj.mpNodes.resize(it_ref->numpoints);
+		for (size_t nodeCnt = 0; nodeCnt < it_ref->numpoints; nodeCnt++)
+		{
+			const auto& refNode = it_ref->mpNodes[nodeCnt];
+			auto& computedNode = laneObj.mpNodes[nodeCnt];
+			// convert reference node from geo-coordinates to XY-coordinates w.r.t the intersetion reference point
+			GeoUtils::lla2enu(intObj.enuCoord, refNode.geoNode, refPtNode);
+			// get the XY-coordinates of the computed node
+			refPtNode.x += laneObj.mpComputed.offset_x;
+			refPtNode.y += laneObj.mpComputed.offset_y;
+			// convert XY-coordinates to geo-coordinates
+			GeoUtils::enu2lla(intObj.enuCoord, refPtNode, computedNode.geoNode);
+		}
+	}
+};
+
 /// --- start of functions to process the intersection nmap file --- ///
 std::vector<uint8_t> LocAware::getIndexesByIds(const uint16_t& regionalId, const uint16_t& intersectionId, const uint8_t& laneId) const
 {
@@ -366,10 +385,11 @@ std::vector<uint8_t> LocAware::getIndexesByIds(const uint16_t& regionalId, const
 
 bool LocAware::readPayload(const std::string& fname)
 { // open payload file
+	std::string prog_name = "readPayload: ";
 	std::ifstream IS_PAYLOAD(fname);
 	if (!IS_PAYLOAD.is_open())
 	{
-		std::cerr << "readPayload: failed open " << fname << std::endl;
+		std::cerr << prog_name << "failed open " << fname << std::endl;
 		return(false);
 	}
 	// read payload file
@@ -396,7 +416,7 @@ bool LocAware::readPayload(const std::string& fname)
 			uint32_t referenceId = LocAware::checkMapUpdate(&buf[0], buf.size());
 			if (referenceId == 0)
 			{
-				std::cerr << "readPayload: failed decoding MAP payload for " << intersectionName << std::endl;
+				std::cerr << prog_name << "failed decoding MAP payload for " << intersectionName << std::endl;
 				has_error = true;
 				break;
 			}
@@ -414,10 +434,11 @@ bool LocAware::readPayload(const std::string& fname)
 
 bool LocAware::readNmap(const std::string& fname)
 { // open nmap file
+	std::string prog_name = "readNmap: ";
 	std::ifstream IS_NMAP(fname);
 	if (!IS_NMAP.is_open())
 	{
-		std::cerr << "readNmap: failed open " << fname << std::endl;
+		std::cerr << prog_name << "failed open " << fname << std::endl;
 		return(false);
 	}
 	// read nmap
@@ -432,7 +453,7 @@ bool LocAware::readNmap(const std::string& fname)
 	uint32_t laneSeq = 0;
 	uint32_t laneId = 0;
 	uint32_t iTmp;
-
+	std::vector< std::pair<size_t, size_t> > computedLanes;
 	bool has_error = false;
 	while (!has_error && std::getline(IS_NMAP, line))
 	{
@@ -455,7 +476,7 @@ bool LocAware::readNmap(const std::string& fname)
 			pIntersection->mapVersion = static_cast<uint8_t>(iTmp & 0xFF);
 			if (pIntersection->mapVersion > 127)
 			{
-				std::cerr << "readNmap: MAP_Version should be between 0 - 127 for intersection " << pIntersection->name << std::endl;
+				std::cerr << prog_name << "MAP_Version should be between 0 - 127 for intersection " << pIntersection->name << std::endl;
 				has_error = true;
 			}
 		}
@@ -499,9 +520,9 @@ bool LocAware::readNmap(const std::string& fname)
 			if (pLane != nullptr)
 			{
 				pApproach->mpLanes.push_back(*pLane);
-				if (pLane->mpNodes.empty())
+				if (!(pLane->isComputedLane) && (pLane->mpNodes.empty()))
 				{
-					std::cerr << "readNmap: empty Nodes for intersection " << pIntersection->name;
+					std::cerr << prog_name << "empty Nodes for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
 					has_error = true;
@@ -512,15 +533,15 @@ bool LocAware::readNmap(const std::string& fname)
 			if (pApproach != nullptr)
 			{
 				pIntersection->mpApproaches.push_back(*pApproach);
-				approachSeq++;
 				if (pApproach->mpLanes.empty())
 				{
-					std::cerr << "readNmap: empty Lanes for intersection " << pIntersection->name;
+					std::cerr << prog_name << "empty Lanes for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id) << std::endl;
 					has_error = true;
 				}
 				delete pApproach;
 				pApproach = nullptr;
+				approachSeq++;
 			}
 			if (!has_error)
 			{
@@ -532,7 +553,7 @@ bool LocAware::readNmap(const std::string& fname)
 				laneSeq = 0;
 				if ((pApproach->id == 0) || (pApproach->id > 15))
 				{
-					std::cerr << "readNmap: ApproachID should be between 1 - 15 for intersection " << pIntersection->name;
+					std::cerr << prog_name << "ApproachID should be between 1 - 15 for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id) << std::endl;
 					has_error = true;
 				}
@@ -545,7 +566,7 @@ bool LocAware::readNmap(const std::string& fname)
 			iss.clear();
 			if (!setApproachType(s, pApproach->type))
 			{
-				std::cerr << "readNmap: invalid Approach_type " << s;
+				std::cerr << prog_name << "invalid Approach_type " << s;
 				std::cerr << " for intersection " << pIntersection->name;
 				std::cerr << " approach " << static_cast<unsigned int>(pApproach->id) << std::endl;
 				has_error = true;
@@ -566,21 +587,24 @@ bool LocAware::readNmap(const std::string& fname)
 			if (pLane != nullptr)
 			{
 				pApproach->mpLanes.push_back(*pLane);
-				laneSeq++;
-				if (pLane->mpNodes.empty())
+				if (!(pLane->isComputedLane) && (pLane->mpNodes.empty()))
 				{
-					std::cerr << "readNmap: empty Nodes for intersection " << pIntersection->name;
+					std::cerr << prog_name << "empty Nodes for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
 					has_error = true;
 				}
 				delete pLane;
 				pLane = nullptr;
+				laneSeq++;
 			}
 			if (!has_error)
 			{
 				pLane = new NmapData::LaneStruct;
 				pLane->id = static_cast<uint8_t>(++laneId);
+				pLane->type = (pApproach->type == MsgEnum::approachType::crosswalk) ? MsgEnum::laneType::crosswalk : MsgEnum::laneType::traffic;
+				pLane->isComputedLane = false;
+				pLane->mpComputed.reset();
 				IndexMap[getIndexMapKey(pIntersection->regionalId, pIntersection->id, pLane->id)] = getIndexMapValue(intersectionSeq, approachSeq, laneSeq);
 			}
 		}
@@ -591,7 +615,7 @@ bool LocAware::readNmap(const std::string& fname)
 			iss.clear();
 			if(!setLaneType(s, pLane->type))
 			{
-				std::cerr << "readNmap: invalid Lane_type " << s;
+				std::cerr << prog_name << "invalid Lane_type " << s;
 				std::cerr << " for intersection " << pIntersection->name;
 				std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 				std::cerr << " lane " << (laneSeq + 1) << std::endl;
@@ -625,7 +649,7 @@ bool LocAware::readNmap(const std::string& fname)
 				iss.clear();
 				if(!setLaneRestriction(s, pLane->type, pLane->attributes))
 				{
-					std::cerr << "readNmap: invalid laneUseRestriction " << s;
+					std::cerr << prog_name << "invalid laneUseRestriction " << s;
 					std::cerr << " for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
@@ -649,7 +673,7 @@ bool LocAware::readNmap(const std::string& fname)
 				iss.clear();
 				if((pLane->type == MsgEnum::laneType::traffic) && !setLaneRule(s, pLane->attributes))
 				{
-					std::cerr << "readNmap: invalid laneRule " << s;
+					std::cerr << prog_name << "invalid laneRule " << s;
 					std::cerr << " for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
@@ -659,9 +683,19 @@ bool LocAware::readNmap(const std::string& fname)
 				ruleNums++;
 			}
 		}
+		else if (line.find("Computed_Lane") != std::string::npos)
+		{ // computed lane configuration
+			pLane->isComputedLane = true;
+			iss.str(line);
+			iss >> std::skipws >> s >> iTmp >> pLane->mpComputed.offset_x >> pLane->mpComputed.offset_y >> pLane->mpComputed.rotateXY
+				>> pLane->mpComputed.scale_x >> pLane->mpComputed.scale_y;
+			iss.clear();
+			pLane->mpComputed.refLaneId = static_cast<uint8_t>(iTmp);
+			computedLanes.push_back(std::make_pair(approachSeq, laneSeq));
+		}
 		else if (line.find("Lane_Nodes") != std::string::npos)
 		{ // beginning of nodes
-			uint32_t nodeNums = 0;
+			size_t nodeNums = 0;
 			while (std::getline(IS_NMAP, line))
 			{
 				if (isEmptyStr(line))
@@ -678,10 +712,10 @@ bool LocAware::readNmap(const std::string& fname)
 				delete pNode;
 				nodeNums++;
 			}
-			pLane->numpoints = (size_t)nodeNums;
+			pLane->numpoints = nodeNums;
 			if ((nodeNums < 2) || (nodeNums > 63))
 			{
-				std::cerr << "readNmap: Lane_Nodes should be between 2 and 63 for intersection " << pIntersection->name;
+				std::cerr << prog_name << "Lane_Nodes should be between 2 and 63 for intersection " << pIntersection->name;
 				std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 				std::cerr << " lane " << (laneSeq + 1) << std::endl;
 				has_error = true;
@@ -707,7 +741,7 @@ bool LocAware::readNmap(const std::string& fname)
 				iss.clear();
 				if (!setManeuverType(connManeuver, type))
 				{
-					std::cerr << "readNmap: invalid Lane_ConnectsTo connManeuver " << connManeuver;
+					std::cerr << prog_name << "invalid Lane_ConnectsTo connManeuver " << connManeuver;
 					std::cerr << " for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
@@ -716,7 +750,7 @@ bool LocAware::readNmap(const std::string& fname)
 				}
 				if (std::sscanf(s.c_str(), "%u.%u.%u.%u", &connectToRegionalId, &connectToIntersetionId, &connectToApproachId, &connectToLaneIndx) != 4)
 				{
-					std::cerr << "readNmap: failed parsing Lane_ConnectsTo remoteLane " << s;
+					std::cerr << prog_name << "failed parsing Lane_ConnectsTo remoteLane " << s;
 					std::cerr << " for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
@@ -729,15 +763,14 @@ bool LocAware::readNmap(const std::string& fname)
 				pConnObj->regionalId = static_cast<uint16_t>(connectToRegionalId);
 				pConnObj->intersectionId = static_cast<uint16_t>(connectToIntersetionId);
 				pConnObj->laneId = static_cast<uint8_t>(((connectToApproachId & 0x0F) << 4) | (--connectToLaneIndx & 0x0F));
-				pConnObj->laneManeuver = ((type == MsgEnum::maneuverType::straightAhead) && (connectToRegionalId != pIntersection->regionalId)
-					&& (connectToIntersetionId != pIntersection->id)) ? MsgEnum::maneuverType::straight : type;
+				pConnObj->laneManeuver = type;
 				pLane->mpConnectTo.push_back(*pConnObj);
 				delete pConnObj;
 				connectToNums++;
 			}
 			if (connectToNums > 16)
 			{
-				std::cerr << "readNmap: Lane_ConnectsTo should be between 1 and 16 for intersection " << pIntersection->name;
+				std::cerr << prog_name << "Lane_ConnectsTo should be between 1 and 16 for intersection " << pIntersection->name;
 				std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 				std::cerr << " lane " << (laneSeq + 1) << std::endl;
 				has_error = true;
@@ -748,9 +781,9 @@ bool LocAware::readNmap(const std::string& fname)
 			if (pLane != nullptr)
 			{
 				pApproach->mpLanes.push_back(*pLane);
-				if (pLane->mpNodes.empty())
+				if (!(pLane->isComputedLane) && (pLane->mpNodes.empty()))
 				{
-					std::cerr << "readNmap: empty Nodes for intersection " << pIntersection->name;
+					std::cerr << prog_name << "empty Nodes for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id);
 					std::cerr << " lane " << (laneSeq + 1) << std::endl;
 					has_error = true;
@@ -763,7 +796,7 @@ bool LocAware::readNmap(const std::string& fname)
 				pIntersection->mpApproaches.push_back(*pApproach);
 				if (pApproach->mpLanes.empty())
 				{
-					std::cerr << "readNmap: empty Lanes for intersection " << pIntersection->name;
+					std::cerr << prog_name << "empty Lanes for intersection " << pIntersection->name;
 					std::cerr << " approach " << static_cast<unsigned int>(pApproach->id) << std::endl;
 					has_error = true;
 				}
@@ -772,8 +805,32 @@ bool LocAware::readNmap(const std::string& fname)
 			}
 			if (pIntersection->speeds.empty())
 			{
-				std::cerr << "readNmap: missing speed limit for intersection " << pIntersection->name << std::endl;
+				std::cerr << prog_name << "missing speed limit for intersection " << pIntersection->name << std::endl;
 				has_error = true;
+			}
+			if (!has_error && !computedLanes.empty())
+			{ // check the exsitence of the reference lane of computed lanes
+				for (const auto& item : computedLanes)
+				{	// get the computed lane object
+					auto& appObj  = pIntersection->mpApproaches[item.first];
+					auto& laneObj = appObj.mpLanes[item.second];
+					// assign refLaneId
+					laneObj.mpComputed.refLaneId = appObj.mpLanes[laneObj.mpComputed.refLaneId - 1].id;
+					// find the reference lane
+					const auto& refLaneId = laneObj.mpComputed.refLaneId;
+					auto it_ref = std::find_if(appObj.mpLanes.begin(), appObj.mpLanes.end(),
+						[&refLaneId](const NmapData::LaneStruct& obj){return(obj.id == refLaneId);});
+					if (it_ref == appObj.mpLanes.end())
+					{
+						std::cerr << prog_name << "reference laneId=" << static_cast<unsigned int>(refLaneId) << " for computed laneId=";
+						std::cerr	<< static_cast<unsigned int>(laneObj.id) << ", on approach=" << static_cast<unsigned int>(appObj.id);
+						std::cerr	<< " does not exist in mpApproaches" << std::endl;
+						has_error = true;
+						break;
+					}
+				}
+				if (!has_error)
+					constructComputedLanes(*pIntersection, computedLanes);
 			}
 			mpIntersection.push_back(*pIntersection);
 			delete pIntersection;
@@ -815,7 +872,7 @@ bool LocAware::readNmap(const std::string& fname)
 					uint8_t conn2LaneId = (conn2approachIndx == 0xFF) ? 0 : LocAware::getLaneIdByIndexes(conn2intersectionIndx, conn2approachIndx, conn2laneIndx);
 					if ((conn2intersectionIndx == 0xFF) || (conn2approachIndx == 0xFF) || (conn2LaneId == 0))
 					{
-						std::cerr << "readNmap: invalid Lane_ConnectsTo " << conn2obj.regionalId << "." << conn2obj.intersectionId << ".";
+						std::cerr << prog_name << "invalid Lane_ConnectsTo " << conn2obj.regionalId << "." << conn2obj.intersectionId << ".";
 						std::cerr << static_cast<unsigned int>(conn2approachId) << static_cast<unsigned int>(conn2laneIndx);
 						std::cerr << " from intersection " << intObj.name << ", approach " << static_cast<unsigned int>(appObj.id);
 						std::cerr << ", lane " << (laneIndx + 1) << std::endl;
@@ -888,15 +945,37 @@ void LocAware::saveNmap(const NmapData::IntersectionStruct& intObj) const
 					OS_NMAP << "\t\t\t" << item << std::endl;
 				OS_NMAP << "\t\tEnd_LaneRules" << std::endl;
 			}
-			OS_NMAP << "\t\tLane_Nodes" << std::endl;
-			for (size_t indx = 0; indx < laneObj.numpoints; indx++)
+			if (laneObj.isComputedLane)
 			{
-				const auto& nodeObj = laneObj.mpNodes[indx];
-				GeoUtils::geoRefPoint2geoPoint(nodeObj.geoNode, geoPoint);
-				OS_NMAP << "\t\t\t" << std::fixed << std::setprecision(7) << geoPoint.latitude;
-				OS_NMAP << "  " << geoPoint.longitude << std::endl;
+				auto inds = LocAware::getIndexesByIds(intObj.regionalId, intObj.id, laneObj.mpComputed.refLaneId);
+				OS_NMAP << "\t\tComputed_Lane " << static_cast<unsigned int>(inds[2] + 1);
+				OS_NMAP << " " << laneObj.mpComputed.offset_x;
+				OS_NMAP << " " << laneObj.mpComputed.offset_y;
+				OS_NMAP << " " << laneObj.mpComputed.rotateXY;
+				OS_NMAP << " " << laneObj.mpComputed.scale_x;
+				OS_NMAP << " " << laneObj.mpComputed.scale_y << std::endl;
+				OS_NMAP << "\t\tComputed_Nodes" << std::endl;
+				for (size_t indx = 0; indx < laneObj.numpoints; indx++)
+				{
+					const auto& nodeObj = laneObj.mpNodes[indx];
+					GeoUtils::geoRefPoint2geoPoint(nodeObj.geoNode, geoPoint);
+					OS_NMAP << "\t\t\t" << std::fixed << std::setprecision(7) << geoPoint.latitude;
+					OS_NMAP << "  " << geoPoint.longitude << std::endl;
+				}
+				OS_NMAP << "\t\tEnd_Computed_Nodes" << std::endl;
 			}
-			OS_NMAP << "\t\tEnd_Nodes" << std::endl;
+			else
+			{
+				OS_NMAP << "\t\tLane_Nodes" << std::endl;
+				for (size_t indx = 0; indx < laneObj.numpoints; indx++)
+				{
+					const auto& nodeObj = laneObj.mpNodes[indx];
+					GeoUtils::geoRefPoint2geoPoint(nodeObj.geoNode, geoPoint);
+					OS_NMAP << "\t\t\t" << std::fixed << std::setprecision(7) << geoPoint.latitude;
+					OS_NMAP << "  " << geoPoint.longitude << std::endl;
+				}
+				OS_NMAP << "\t\tEnd_Nodes" << std::endl;
+			}
 			if (!laneObj.mpConnectTo.empty())
 			{
 				OS_NMAP << "\t\tLane_ConnectsTo" << std::endl;
@@ -1188,38 +1267,39 @@ auto IntObj2MapData = [](const NmapData::IntersectionStruct& intObj, MapData_ele
 	size_t appCnt = 0;
 	for (const auto& appObj : intObj.mpApproaches)
 	{
-		auto& appData = mapData.mpApproaches[appCnt++];
+		auto& appData = mapData.mpApproaches[appCnt];
 		if (appObj.mpLanes.empty())
 			continue;
 		appData.id          = appObj.id;
 		appData.type        = appObj.type;
 		appData.speed_limit = speed_mph2mps(appObj.speed_limit);
-		if (std::find(mapData.speeds.begin(), mapData.speeds.end(),	appData.speed_limit) == mapData.speeds.end())
-			mapData.speeds.push_back(appData.speed_limit);
 		appData.mpLanes.resize(appObj.mpLanes.size());
-		size_t laneCnt = 0;
-		for (const auto& laneObj : appObj.mpLanes)
+		for (size_t laneCnt = 0; laneCnt < appObj.mpLanes.size(); laneCnt++)
 		{
-			auto& laneData = appData.mpLanes[laneCnt++];
+			const auto& laneObj = appObj.mpLanes[laneCnt];
+			auto& laneData = appData.mpLanes[laneCnt];
 			laneData.id           = laneObj.id;
 			laneData.type         = laneObj.type;
 			laneData.attributes   = laneObj.attributes;
 			laneData.width        = laneObj.width;
 			laneData.controlPhase = laneObj.controlPhase;
+			laneData.isComputedLane = laneObj.isComputedLane;
+			laneData.mpComputedLane = {laneObj.mpComputed.refLaneId, laneObj.mpComputed.offset_x, laneObj.mpComputed.offset_y,
+				laneObj.mpComputed.rotateXY, laneObj.mpComputed.scale_x, laneObj.mpComputed.scale_y};
 			if (!laneObj.mpConnectTo.empty())
 			{
 				laneData.mpConnectTo.resize(laneObj.mpConnectTo.size());
-				size_t connCnt = 0;
-				for (const auto& connObj : laneObj.mpConnectTo)
+				for (size_t connCnt = 0; connCnt < laneObj.mpConnectTo.size(); connCnt++)
 				{
-					auto& connData = laneData.mpConnectTo[connCnt++];
+					const auto& connObj = laneObj.mpConnectTo[connCnt];
+					auto& connData = laneData.mpConnectTo[connCnt];
 					connData.regionalId     = connObj.regionalId;
 					connData.intersectionId = connObj.intersectionId;
 					connData.laneId         = connObj.laneId;
 					connData.laneManeuver   = connObj.laneManeuver;
 				}
 			}
-			if (!laneObj.mpNodes.empty() && (laneObj.numpoints > 0))
+			if (!laneObj.isComputedLane && !laneObj.mpNodes.empty() && (laneObj.numpoints > 0))
 			{ // inbound lane may have included way-points from its upstream outbound lane
 				laneData.mpNodes.resize(laneObj.numpoints);
 				GeoUtils::point2D_t prev_ptNode{0,0};
@@ -1231,11 +1311,13 @@ auto IntObj2MapData = [](const NmapData::IntersectionStruct& intObj, MapData_ele
 					nodeData.offset_y  = nodeObj.ptNode.y - prev_ptNode.y;
 					nodeData.latitude  = nodeObj.geoNode.latitude;
 					nodeData.longitude = nodeObj.geoNode.longitude;
-					nodeData.useXY = true;
+					uint32_t offset_dist = static_cast<uint32_t>(std::max(std::abs(nodeData.offset_x), std::abs(nodeData.offset_y)));
+					nodeData.useXY = (offset_dist <= 0x7FFF);
 					prev_ptNode = nodeObj.ptNode;
 				}
 			}
 		}
+		appCnt++;
 	}
 };
 
@@ -1248,7 +1330,6 @@ size_t LocAware::encode_mapdata_payload(void)
 	{
 		intObj.mapPayload.resize(DsrcConstants::maxMsgSize);
 		IntObj2MapData(intObj, dsrcFrameIn.mapData);
-		dsrcFrameIn.mapData.isSingleFrame = speedLimitInLane;
 		size_t payload_size = AsnJ2735Lib::encode_msgFrame(dsrcFrameIn, &intObj.mapPayload[0], intObj.mapPayload.size());
 		if (payload_size > 0)
 		{
@@ -1297,11 +1378,12 @@ uint32_t LocAware::checkMapUpdate(const uint8_t* buf, size_t size)
 	pIntObj->mpApproaches.resize(mapIn.mpApproaches.size());
 	auto& speeds = pIntObj->speeds;
 	size_t appCnt = 0;
+	std::vector< std::pair<size_t, size_t> > computedLanes;
 	for (const auto& appData : mapIn.mpApproaches)
 	{
 		if (appData.mpLanes.empty())
 			continue;
-		auto& appObj = pIntObj->mpApproaches[appCnt++];
+		auto& appObj = pIntObj->mpApproaches[appCnt];
 		appObj.id = appData.id;
 		appObj.speed_limit =  speed_mps2mph(appData.speed_limit);
 		if (std::find(speeds.begin(), speeds.end(),	appObj.speed_limit) == speeds.end())
@@ -1309,14 +1391,13 @@ uint32_t LocAware::checkMapUpdate(const uint8_t* buf, size_t size)
 		appObj.type = appData.type;
 		appObj.mindist2intsectionCentralLine = 0;
 		appObj.mpLanes.resize(appData.mpLanes.size());
-		size_t laneCnt = 0;
-		for (const auto& laneData : appData.mpLanes)
+		for (size_t laneCnt = 0; laneCnt < appData.mpLanes.size(); laneCnt++)
 		{
-			auto& laneObj = appObj.mpLanes[laneCnt++];
+			const auto& laneData = appData.mpLanes[laneCnt];
+			auto& laneObj = appObj.mpLanes[laneCnt];
 			laneObj.id           = laneData.id;
 			laneObj.type         = laneData.type;
 			laneObj.attributes   = laneData.attributes;
-			laneObj.width        = laneData.width;
 			laneObj.controlPhase = laneData.controlPhase;
 			if (!laneData.mpConnectTo.empty())
 			{
@@ -1330,34 +1411,47 @@ uint32_t LocAware::checkMapUpdate(const uint8_t* buf, size_t size)
 					connObj.laneManeuver = connData.laneManeuver;
 				}
 			}
-			if (!laneData.mpNodes.empty())
+			laneObj.isComputedLane = laneData.isComputedLane;
+			if (laneObj.isComputedLane)
 			{
-				laneObj.numpoints = laneData.mpNodes.size();
-				laneObj.mpNodes.resize(laneData.mpNodes.size());
-
-				GeoUtils::point2D_t ptNode{0, 0};
-				size_t nodeCnt = 0;
-				for (const auto& nodeData : laneData.mpNodes)
+				laneObj.mpComputed = {laneData.mpComputedLane.refLaneId, laneData.mpComputedLane.offset_x, laneData.mpComputedLane.offset_y,
+					laneData.mpComputedLane.rotateXY, laneData.mpComputedLane.scale_x, laneData.mpComputedLane.scale_y};
+				computedLanes.push_back(std::make_pair(appCnt, laneCnt));
+			}
+			else
+			{
+				laneObj.mpComputed.reset();
+				laneObj.width = laneData.width;
+				if (!laneData.mpNodes.empty())
 				{
-					auto& nodeObj = laneObj.mpNodes[nodeCnt];
-					if (nodeData.useXY)
+					laneObj.numpoints = laneData.mpNodes.size();
+					laneObj.mpNodes.resize(laneData.mpNodes.size());
+					GeoUtils::point2D_t ptNode{0, 0};
+					for (size_t nodeCnt = 0; nodeCnt < laneData.mpNodes.size(); nodeCnt++)
 					{
-						ptNode.x += nodeData.offset_x;
-						ptNode.y += nodeData.offset_y;
-						GeoUtils::enu2lla(pIntObj->enuCoord, ptNode, nodeObj.geoNode);
+						const auto& nodeData = laneData.mpNodes[nodeCnt];
+						auto& nodeObj = laneObj.mpNodes[nodeCnt];
+						if (nodeData.useXY)
+						{
+							ptNode.x += nodeData.offset_x;
+							ptNode.y += nodeData.offset_y;
+							GeoUtils::enu2lla(pIntObj->enuCoord, ptNode, nodeObj.geoNode);
+						}
+						else
+						{
+							nodeObj.geoNode.latitude  = nodeData.latitude;
+							nodeObj.geoNode.longitude = nodeData.longitude;
+							nodeObj.geoNode.elevation = pIntObj->geoRef.elevation;
+						}
 					}
-					else
-					{
-						nodeObj.geoNode.latitude  = nodeData.latitude;
-						nodeObj.geoNode.longitude = nodeData.longitude;
-						nodeObj.geoNode.elevation = pIntObj->geoRef.elevation;
-					}
-					nodeCnt++;
 				}
 			}
 		}
+		appCnt++;
 	}
 	pIntObj->mpApproaches.resize(appCnt);
+	if (!computedLanes.empty())
+		constructComputedLanes(*pIntObj, computedLanes);
 	if (saveNewMap2nmap)
 		LocAware::saveNmap(*pIntObj);
 	if (initiated)
@@ -2253,7 +2347,6 @@ void LocAware::updateLocationAware(const GeoUtils::vehicleTracking_t& vehicleTra
 				vehicleLocationAware.maneuvers.set(0);
 				break;
 			case MsgEnum::maneuverType::straightAhead:
-			case MsgEnum::maneuverType::straight:
 				vehicleLocationAware.maneuvers.set(1);
 				break;
 			default:

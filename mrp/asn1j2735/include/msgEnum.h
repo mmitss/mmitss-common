@@ -35,7 +35,7 @@ namespace MsgEnum
 
 	enum class approachType    : uint8_t {inbound = 1, outbound, crosswalk = 4};
 	enum class laneType        : uint8_t {traffic = 1, crosswalk = 4};
-	enum class maneuverType    : uint8_t {unavailable, uTurn, leftTurn, rightTurn, straightAhead, straight};
+	enum class maneuverType    : uint8_t {unavailable, uTurn, leftTurn, rightTurn, straightAhead};
 	enum class polygonType     : uint8_t {colinear, concave, convex};
 	enum class phaseColor      : uint8_t {dark, green, yellow, red, flashingRed};
 	enum class phaseState      : uint8_t {unavailable, dark, flashingRed, redLight, preMovement,
